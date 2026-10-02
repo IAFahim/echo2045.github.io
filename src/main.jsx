@@ -20,6 +20,24 @@ const esportsStats = [
 ["","","Organised National Team Participation in International Events"]
 ];
 
+const projects = [
+{
+title:"Bangladesh Bus Simulator",
+tags:"Unity • Mobile • Live Project • Simulation",
+text:"Live mobile simulation game with 10M+ downloads. Contributions include optimization, bug fixing, Addressables, Cloud Content Delivery and traffic system improvements."
+},
+{
+title:"Endless Dhaka",
+tags:"Unity • Mobile • Racing",
+text:"Complete remake and release of a mobile racing game. Contributed to approximately 1M new downloads."
+},
+{
+title:"Truck Simulator Bangladesh",
+tags:"Unity • Mobile • Game Systems",
+text:"Designed and programmed a custom traffic system tailored for realistic simulation and player experience."
+}
+];
+
 function Card({data}) {
  return (
   <div className="statCard">
@@ -59,6 +77,18 @@ function App(){
 
    <section className="featured">
     <h2>Featured Projects</h2>
+
+    <div className="projectCards">
+     {projects.map((project,index)=>(
+      <div className="projectCard" key={index}>
+       <div className="projectImage">PROJECT IMAGE</div>
+       <h3>{project.title}</h3>
+       <div className="tags">{project.tags}</div>
+       <p>{project.text}</p>
+       <a>View Project →</a>
+      </div>
+     ))}
+    </div>
    </section>
   </main>
  );

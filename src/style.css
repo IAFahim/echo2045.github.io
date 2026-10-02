@@ -124,3 +124,42 @@ h1{
   min-width:0;
  }
 }
+
+
+/* Featured Projects */
+.projectCards{
+ display:flex;
+ flex-wrap:wrap;
+ justify-content:center;
+ gap:25px;
+}
+
+.projectCard{
+ flex:1 1 300px;
+ max-width:380px;
+ border:1px solid rgba(85,185,255,.25);
+ border-radius:18px;
+ padding:20px;
+ background:rgba(255,255,255,.02);
+}
+
+.projectImage{
+ height:170px;
+ background:#101923;
+ border-radius:12px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ color:#65788c;
+ margin-bottom:20px;
+}
+
+.tags{
+ color:#55b9ff;
+ font-size:.9rem;
+ margin-bottom:12px;
+}
+
+.projectCard a{
+ color:#55b9ff;
+}
