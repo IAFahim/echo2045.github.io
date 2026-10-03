@@ -352,8 +352,8 @@ function App() {
 
     /* ── free-run state: the hero lives in world units (0–4800) ── */
     const held = new Set();
-    const H = { x: 170, y: 0, vx: 0, vy: 0, ground: "road", jumps: 0, face: 1, dropT: 0, dropP: null, onPlat: null };
-    let lastUser = 0;
+    const H = { x: 170, y: 0, vx: 0, vy: 0, ground: "road", jumps: 0, face: 1, dropT: 0, dropP: null, onPlat: null, coyote: 0, jumpAt: 0 };
+    let lastUser = 0, lastNext = "", raf = 0, prevT = 0;
     const bolts = []; // {x,y,dx,dy,el,life}
     const bus = { x: 900, v: 1.5, dir: 1 }; // ambient traffic — the night bus loops the route
     const busPlat = [0, 0, 551, "bus"]; // stable identity so S can drop through the roof
@@ -413,7 +413,8 @@ function App() {
       lastBest = best;
       dots.forEach((d, i) => d.classList.toggle("here", i === best));
       const nxt = STOPS.find((st) => st.x > H.x + 110);
-      setNext(nxt ? nxt.label : "END OF LINE");
+      const label = nxt ? nxt.label : "END OF LINE";
+      if (label !== lastNext) { lastNext = label; setNext(label); }
       /* stars: touch to collect */
       let ng = 0;
       pks.forEach((pk, i) => {
@@ -428,22 +429,27 @@ function App() {
         const [cx, cy] = CRATES[i];
         if (Math.abs(H.x - (cx + 13)) < 30 && feetY() > cy - 8 && feetY() < cy + 40) breakCrate(i);
       });
-      /* camera follows only while he's under direct control (keys or mid-air) */
+      /* camera follows while he's moving, biased toward his facing */
       const max = el.scrollWidth - el.clientWidth;
-      const target = Math.max(0, Math.min(max, H.x * sx - el.clientWidth * 0.5));
-      if ((held.size || H.ground === "air") && performance.now() - lastUser > 700)
-        el.scrollLeft += (target - el.scrollLeft) * 0.14;
+      const target = Math.max(0, Math.min(max, (H.x + H.vx * 10) * sx - el.clientWidth * 0.5));
+      if ((held.size || H.ground === "air" || Math.abs(H.vx) > 0.4) && performance.now() - lastUser > 700)
+        el.scrollLeft += (target - el.scrollLeft) * (1 - Math.pow(0.86, dt));
       /* draw him (transform-only, no layout) */
       hero.style.transform = `translate(${H.x * sx - el.scrollWidth * 0.00875}px,${-H.y * sy}px) scaleX(${H.face})`;
       hero.classList.toggle("air", H.ground === "air");
       hero.classList.toggle("run", Math.abs(H.vx) > 0.6 && H.ground !== "air");
     };
 
-    /* the game loop — always on (traffic never sleeps) */
-    const tick = () => {
+    /* the game loop — always on (traffic never sleeps), dt-scaled so
+       it plays identically on 60Hz and 144Hz panels */
+    let dt = 1;
+    const tick = (t) => {
+      dt = Math.min(2.5, Math.max(0.4, (t - prevT) / 16.667 || 1));
+      prevT = t;
+      const now = performance.now();
       const sx = scaleX();
       /* move the night bus, bounce it at the city limits */
-      bus.x += bus.v * bus.dir;
+      bus.x += bus.v * bus.dir * dt;
       if (bus.x > 4500) bus.dir = -1; else if (bus.x < 120) bus.dir = 1;
       traf.style.transform = `translateX(${bus.x * sx}px) scaleX(${bus.dir})`;
       traf.style.setProperty("--spin", (bus.x * sx / 9) + "deg");
@@ -452,31 +458,30 @@ function App() {
       /* hero input → velocity */
       const dir = (held.has("d") || held.has("arrowright") ? 1 : 0) - (held.has("a") || held.has("arrowleft") ? 1 : 0);
       const cap = held.has("shift") ? 10 : 7;
-      if (dir) { H.vx = Math.max(-cap, Math.min(cap, H.vx + dir * 0.55)); H.face = dir; }
+      if (dir) { H.vx = Math.max(-cap, Math.min(cap, H.vx + dir * 0.55 * dt)); H.face = dir; }
       else if (!held.size) {
         /* visitor steered the camera — he sprints to wherever you're looking */
         const d = (el.scrollLeft + el.clientWidth * 0.5) / sx - H.x;
         const ad = Math.abs(d);
         if (ad > 50) {
           const ccap = Math.min(20, 7 + ad * 0.012);
-          H.vx = Math.max(-ccap, Math.min(ccap, H.vx + Math.sign(d) * 0.6));
+          H.vx = Math.max(-ccap, Math.min(ccap, H.vx + Math.sign(d) * 0.6 * dt));
           H.face = Math.sign(d);
-        } else H.vx *= H.ground === "air" ? 0.94 : 0.8;
-      } else H.vx *= H.ground === "air" ? 0.94 : 0.8;
+        } else H.vx *= Math.pow(H.ground === "air" ? 0.94 : 0.8, dt);
+      } else H.vx *= Math.pow(H.ground === "air" ? 0.94 : 0.8, dt);
       if (Math.abs(H.vx) < 0.05) H.vx = 0;
-      H.x = Math.max(24, Math.min(4776, H.x + H.vx));
-      if (H.ground === "bus") H.x = Math.max(24, Math.min(4776, H.x + bus.v * bus.dir));
+      H.x = Math.max(24, Math.min(4776, H.x + H.vx * dt));
+      if (H.ground === "bus") H.x = Math.max(24, Math.min(4776, H.x + bus.v * bus.dir * dt));
 
       /* gravity + hold-to-glide (y is height above the road, so up = +) */
-      H.vy -= 0.42;
+      H.vy -= 0.42 * dt;
       if ((held.has("w") || held.has(" ") || held.has("arrowup")) && H.vy < 0) H.vy = Math.max(H.vy, -1.15);
       const prevFeet = feetY();
-      H.y = Math.max(0, H.y + H.vy);
+      H.y = Math.max(0, H.y + H.vy * dt);
       const feet = feetY();
 
       /* one-way platforms + the bus roof — land when falling onto a top */
       H.ground = "air";
-      const now = performance.now();
       for (const p of PLATS.concat([busPlat])) {
         const [x1, x2, top, id] = p;
         if (H.vy <= 0 && prevFeet <= top + 2 && feet >= top && H.x > x1 - 6 && H.x < x2 + 6 && !(p === H.dropP && now < H.dropT)) {
@@ -484,11 +489,24 @@ function App() {
         }
       }
       if (feet >= 612) { H.y = 0; H.vy = 0; H.ground = "road"; H.jumps = 0; }
+      if (H.ground !== "air") H.coyote = now;
+
+      /* buffered + coyote + double jump resolution */
+      if (H.jumpAt) {
+        const tj = now - H.jumpAt;
+        if (tj > 160) H.jumpAt = 0;
+        else if (H.ground !== "air" || (H.jumps === 0 && now - H.coyote < 120)) {
+          H.vy = 8.8; H.jumps = 1; H.ground = "air"; H.jumpAt = 0; H.onPlat = null;
+        } else if (H.jumps < 2) {
+          /* airborne past coyote — the weaker double jump is all that's left */
+          H.vy = 7.6; H.jumps = 2; H.jumpAt = 0;
+        }
+      }
 
       /* bolts fly */
       for (let i = bolts.length - 1; i >= 0; i--) {
         const b = bolts[i];
-        b.x += b.dx; b.y += b.dy; b.life--;
+        b.x += b.dx * dt; b.y += b.dy * dt; b.life -= dt;
         b.el.style.left = (b.x / 4800 * 100) + "%";
         b.el.style.top = (b.y / 720 * 100) + "%";
         let dead = b.life <= 0 || b.x < 0 || b.x > 4800 || b.y > 700;
@@ -506,13 +524,12 @@ function App() {
       }
 
       syncHero();
-      requestAnimationFrame(tick);
+      raf = requestAnimationFrame(tick);
     };
-    requestAnimationFrame(tick);
+    raf = requestAnimationFrame(tick);
 
-    const jump = () => {
-      if (H.jumps < 2) { H.vy = H.jumps === 0 ? 8.8 : 7.6; H.jumps++; H.ground = "air"; }
-    };
+    /* pressing jump just records intent — the tick resolves buffer/coyote */
+    const jump = () => { H.jumpAt = performance.now(); };
     const KEYS = ["w", "a", "s", "d", "arrowup", "arrowleft", "arrowright", "arrowdown", " ", "shift"];
     const down = (e) => {
       const k = e.key.toLowerCase();
@@ -524,7 +541,12 @@ function App() {
       else if (k === "s" || k === "arrowdown") { if (H.ground === "plat" || H.ground === "bus") { H.dropT = performance.now() + 380; H.dropP = H.onPlat; H.ground = "air"; H.y -= 2; } }
       else held.add(k);
     };
-    const up = (e) => held.delete(e.key.toLowerCase());
+    const up = (e) => {
+      const k = e.key.toLowerCase();
+      held.delete(k);
+      /* early release = short hop — variable jump height */
+      if ((k === "w" || k === "arrowup" || k === " ") && H.vy > 2.2) H.vy *= 0.42;
+    };
     const blur = () => held.clear();
 
     /* click/tap = fire a bolt toward the pointer (tap also hops on touch) */
@@ -563,6 +585,7 @@ function App() {
       if (i >= 0) { H.x = STOPS[i].x; el.scrollLeft = Math.max(0, H.x * scaleX() - el.clientWidth * 0.5); }
     }
     return () => {
+      cancelAnimationFrame(raf);
       el.removeEventListener("wheel", onWheel);
       el.removeEventListener("scroll", onScroll);
       el.removeEventListener("pointermove", markUser);

@@ -334,16 +334,15 @@ circle.host{fill:#dfe8ff;stroke:none}
 /* ── the hero: a free runner living in world coordinates ── */
 .heropin{
   position:absolute;bottom:15%;left:0;width:1.75%;z-index:6;pointer-events:none;
-  filter:drop-shadow(0 8px 12px rgba(0,0,0,.55));
 }
 .heropin .hero{display:block;width:100%}
 .heropin.air .leg{animation:none;transform:rotate(22deg)}
 .heropin.air .leg.l2{transform:rotate(-6deg)}
 
 /* the night bus loops the route on its own — its roof is a platform */
-.traffic{position:absolute;bottom:15%;left:0;width:3.3%;z-index:5;pointer-events:none;animation:bob 1.7s ease-in-out infinite}
-@keyframes bob{0%,100%{margin-top:0}50%{margin-top:-4px}}
-.traffic .bus{display:block;width:100%;filter:drop-shadow(0 8px 14px rgba(0,0,0,.55))}
+.traffic{position:absolute;bottom:15%;left:0;width:3.3%;z-index:5;pointer-events:none}
+.traffic .bus{display:block;width:100%;animation:bob 1.7s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 .fx{position:absolute;inset:0;z-index:7;pointer-events:none}
 
 /* bolts */
