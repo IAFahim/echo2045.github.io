@@ -352,10 +352,11 @@ function App() {
 
     /* ── free-run state: the hero lives in world units (0–4800) ── */
     const held = new Set();
-    const H = { x: 170, y: 0, vx: 0, vy: 0, ground: "road", jumps: 0, face: 1, dropT: 0, dropP: null };
-    let camAt = 0, lastUser = 0;
+    const H = { x: 170, y: 0, vx: 0, vy: 0, ground: "road", jumps: 0, face: 1, dropT: 0, dropP: null, onPlat: null };
+    let lastUser = 0;
     const bolts = []; // {x,y,dx,dy,el,life}
     const bus = { x: 900, v: 1.5, dir: 1 }; // ambient traffic — the night bus loops the route
+    const busPlat = [0, 0, 551, "bus"]; // stable identity so S can drop through the roof
 
     const scaleX = () => el.scrollWidth / 4800, scaleY = () => el.clientHeight / 720;
     const feetY = () => 612 - H.y; // world-y of the hero's feet
@@ -427,13 +428,13 @@ function App() {
         const [cx, cy] = CRATES[i];
         if (Math.abs(H.x - (cx + 13)) < 30 && feetY() > cy - 8 && feetY() < cy + 40) breakCrate(i);
       });
-      /* camera follows when he's moving and the visitor isn't steering */
+      /* camera follows only while he's under direct control (keys or mid-air) */
       const max = el.scrollWidth - el.clientWidth;
       const target = Math.max(0, Math.min(max, H.x * sx - el.clientWidth * 0.5));
-      if ((Math.abs(H.vx) > 0.4 || H.ground !== "road" || held.size) && performance.now() - lastUser > 700)
+      if ((held.size || H.ground === "air") && performance.now() - lastUser > 700)
         el.scrollLeft += (target - el.scrollLeft) * 0.14;
       /* draw him (transform-only, no layout) */
-      hero.style.transform = `translate(${H.x * sx - hero.offsetWidth / 2}px,${-H.y * sy}px) scaleX(${H.face})`;
+      hero.style.transform = `translate(${H.x * sx - el.scrollWidth * 0.00875}px,${-H.y * sy}px) scaleX(${H.face})`;
       hero.classList.toggle("air", H.ground === "air");
       hero.classList.toggle("run", Math.abs(H.vx) > 0.6 && H.ground !== "air");
     };
@@ -446,41 +447,43 @@ function App() {
       if (bus.x > 4500) bus.dir = -1; else if (bus.x < 120) bus.dir = 1;
       traf.style.transform = `translateX(${bus.x * sx}px) scaleX(${bus.dir})`;
       traf.style.setProperty("--spin", (bus.x * sx / 9) + "deg");
-      const busTop = 551, busX1 = bus.x + 12, busX2 = bus.x + 140;
+      busPlat[0] = bus.x + 12; busPlat[1] = bus.x + 140;
 
       /* hero input → velocity */
       const dir = (held.has("d") || held.has("arrowright") ? 1 : 0) - (held.has("a") || held.has("arrowleft") ? 1 : 0);
       const cap = held.has("shift") ? 10 : 7;
       if (dir) { H.vx = Math.max(-cap, Math.min(cap, H.vx + dir * 0.55)); H.face = dir; }
-      else if (!held.size && performance.now() - lastUser < 700) {
-        /* the visitor is steering the camera — he sprints to keep up */
+      else if (!held.size) {
+        /* visitor steered the camera — he sprints to wherever you're looking */
         const d = (el.scrollLeft + el.clientWidth * 0.5) / sx - H.x;
-        if (Math.abs(d) > 14) { H.vx = Math.max(-9, Math.min(9, H.vx + Math.sign(d) * 0.55)); H.face = Math.sign(d); }
-        else H.vx *= 0.8;
+        const ad = Math.abs(d);
+        if (ad > 50) {
+          const ccap = Math.min(20, 7 + ad * 0.012);
+          H.vx = Math.max(-ccap, Math.min(ccap, H.vx + Math.sign(d) * 0.6));
+          H.face = Math.sign(d);
+        } else H.vx *= H.ground === "air" ? 0.94 : 0.8;
       } else H.vx *= H.ground === "air" ? 0.94 : 0.8;
       if (Math.abs(H.vx) < 0.05) H.vx = 0;
       H.x = Math.max(24, Math.min(4776, H.x + H.vx));
       if (H.ground === "bus") H.x = Math.max(24, Math.min(4776, H.x + bus.v * bus.dir));
 
-      /* gravity + hold-to-glide */
-      H.vy += 0.42;
-      if ((held.has("w") || held.has(" ") || held.has("arrowup")) && H.vy > 0) H.vy = Math.min(H.vy, 1.15);
+      /* gravity + hold-to-glide (y is height above the road, so up = +) */
+      H.vy -= 0.42;
+      if ((held.has("w") || held.has(" ") || held.has("arrowup")) && H.vy < 0) H.vy = Math.max(H.vy, -1.15);
       const prevFeet = feetY();
       H.y = Math.max(0, H.y + H.vy);
       const feet = feetY();
 
-      /* one-way platforms + the bus roof */
+      /* one-way platforms + the bus roof — land when falling onto a top */
       H.ground = "air";
       const now = performance.now();
-      const plats = PLATS.concat([[busX1, busX2, busTop, "bus"]]);
-      for (const p of plats) {
+      for (const p of PLATS.concat([busPlat])) {
         const [x1, x2, top, id] = p;
-        if (H.vy >= 0 && prevFeet <= top + 2 && feet >= top && H.x > x1 - 6 && H.x < x2 + 6 && !(p === H.dropP && now < H.dropT)) {
+        if (H.vy <= 0 && prevFeet <= top + 2 && feet >= top && H.x > x1 - 6 && H.x < x2 + 6 && !(p === H.dropP && now < H.dropT)) {
           H.y = 612 - top; H.vy = 0; H.ground = id || "plat"; H.jumps = 0; H.onPlat = p; break;
         }
       }
       if (feet >= 612) { H.y = 0; H.vy = 0; H.ground = "road"; H.jumps = 0; }
-      if (H.ground !== "air") H.jumps = Math.min(H.jumps, 1); // first hop used
 
       /* bolts fly */
       for (let i = bolts.length - 1; i >= 0; i--) {
@@ -508,7 +511,7 @@ function App() {
     requestAnimationFrame(tick);
 
     const jump = () => {
-      if (H.jumps < 2) { H.vy = H.jumps === 0 ? -8.8 : -7.6; H.jumps++; H.ground = "air"; }
+      if (H.jumps < 2) { H.vy = H.jumps === 0 ? 8.8 : 7.6; H.jumps++; H.ground = "air"; }
     };
     const KEYS = ["w", "a", "s", "d", "arrowup", "arrowleft", "arrowright", "arrowdown", " ", "shift"];
     const down = (e) => {
@@ -524,9 +527,10 @@ function App() {
     const up = (e) => held.delete(e.key.toLowerCase());
     const blur = () => held.clear();
 
-    /* click/tap = fire a bolt toward the pointer */
+    /* click/tap = fire a bolt toward the pointer (tap also hops on touch) */
     const fire = (e) => {
       if (e.target.closest(".hud,.routeline,.poi,button,a")) return;
+      if (e.pointerType === "touch") jump();
       const r = el.getBoundingClientRect();
       const tx = (el.scrollLeft + e.clientX - r.left) / scaleX();
       const ty = (e.clientY - r.top) / scaleY();
