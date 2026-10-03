@@ -7,8 +7,8 @@ import "./style.css";
 const MODES = ["STUDENT", "PROGRAMMER", "INTERN", "PROGRAMMER", "HOST", "RESEARCHER", "BUILDER", "MAKER", "GUEST"];
 const ZONES = ["city", "city", "city", "city", "arena", "lab", "build", "arcade", "terminus"];
 
-/* collectible stars along the route — scroll over them to collect */
-const PKX = [330, 760, 1180, 1640, 2100, 2360, 2520, 2960, 3450, 3850, 4270, 4450];
+/* collectible stars [x, y] — the high ones need a hop */
+const PKS = [[330, 556], [760, 556], [1180, 500], [1640, 556], [2100, 556], [2360, 500], [2520, 556], [2960, 556], [3450, 500], [3850, 556], [4270, 500], [4450, 556]];
 
 /* mid skyline: one long silhouette path (x 0–4800) */
 const SKY = "M0 620V430h90v190zm90-40h60v230H90zm60-90h70v320h-70zm70 30h60v290h-60zm60-70h90v360h-90zm90 20h80v340h-80zm80-60h70v400h-70zm70 40h60v360h-60zm60-90h100v450H860zm100 30h70v420h-70zm70-40h80v460h-80zm80 60h90v400h-90zm90-30h70v430h-70zm70 50h60v380h-60zm60-80h90v460h-90zm90 40h80v420h-80zm80-60h70v480h-70zm70 70h90v410h-90zm90-50h80v460h-80zm80 60h70v400h-70zm70-80h90v480h-90zm90 50h60v430h-60zm60-60h80v490h-80zm80 30h90v460h-90zm90-40h70v500h-70zm70 60h80v440h-80zm80-70h90v510h-90zm90 40h80v470h-80zm80-60h70v530h-70zm70 70h90v460h-90zm90-40h80v500h-80zm80 60h70v440h-70zm70-60h90v500h-90zm90 30h80v470h-80zm80-50h70v520h-70zm70 60h90v460h-90zm90-40h80v500h-80zm80 50h70v450h-70zm70-60h90v510h-90zm90 40h80v470h-80zm80-70h70v540h-70zm70 60h90v480h-90zm90-30h80v510h-80zm80 40h70v470h-70zm70-50h90v520h-90zm90 30h80v490h-80zm80-60h70v550h-70zm70 70h90v480h-90zm90-40h80v520h-80zm80 50h70v470h-70zm70-60h90v530h-90zm90 30h80v500h-80z";
@@ -209,8 +209,8 @@ function World() {
       <rect x="4090" y="622" width="180" height="50" fill="#ff7ad9" opacity=".08" filter="url(#soft)" />
 
       {/* collectibles — grab every star on the way through */}
-      {PKX.map((x, i) => (
-        <g key={x} className="pk" transform={`translate(${x},556)`}>
+      {PKS.map(([x, y], i) => (
+        <g key={x} className="pk" transform={`translate(${x},${y})`}>
           <g className="pkin" style={{ animationDelay: (i * 0.27) + "s" }}>
             <circle r="13" className="pkbg" />
             <path d="M0-9 2.6-2.7 9.2-2.8 4.1 1.7 5.7 8.6 0 4.4 -5.7 8.6 -4.1 1.7 -9.2-2.8 -2.6-2.7z" />
@@ -326,13 +326,32 @@ function App() {
 
   useEffect(() => {
     const el = world.current;
+    const wrap = busEl.current.parentElement;
     const pois = [...el.querySelectorAll(".poi")];
     const pks = [...el.querySelectorAll(".pk")];
     const dots = [...document.querySelectorAll(".stops a")];
     let lastBest = -1, gotCount = 0;
-    const onWheel = (e) => {
-      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { el.scrollLeft += e.deltaY; e.preventDefault(); }
+    /* drive state — velocity, jump physics, held keys */
+    const held = new Set();
+    let vel = 0, jumpY = 0, vY = 0, grounded = true, raf = 0;
+
+    const collect = (s) => {
+      const max = el.scrollWidth - el.clientWidth;
+      const frac = 0.5 + 0.22 * Math.pow(max ? s / max : 0, 6);
+      const heroX = s + el.clientWidth * frac;
+      const unit = el.clientHeight / 720;
+      const heroTop = el.clientHeight * 0.885 - busEl.current.clientWidth * 0.384 - jumpY;
+      let newGot = 0;
+      pks.forEach((pk, i) => {
+        if (pk.classList.contains("got")) return;
+        const px = PKS[i][0] * el.scrollWidth / 4800;
+        if (px <= heroX + 24 && PKS[i][1] * unit >= heroTop - 14) {
+          pk.classList.add("got"); newGot++;
+        }
+      });
+      if (newGot) { gotCount += newGot; setGot(gotCount); }
     };
+
     const onScroll = () => {
       const max = el.scrollWidth - el.clientWidth;
       const s = el.scrollLeft;
@@ -344,7 +363,7 @@ function App() {
       /* the hero holds screen-center for most of the ride, then walks
          ahead to the gate as the line terminates */
       const frac = 0.5 + 0.22 * Math.pow(max ? s / max : 0, 6);
-      busEl.current.parentElement.style.left = (frac * 100).toFixed(2) + "%";
+      wrap.style.left = (frac * 100).toFixed(2) + "%";
       const heroX = s + el.clientWidth * frac;
       let best = null, bd = 1e9;
       pois.forEach((p, i) => {
@@ -354,13 +373,7 @@ function App() {
         const dh = Math.abs(STOPS[i].x * el.scrollWidth / 4800 - heroX);
         if (dh < bd) { bd = dh; best = i; }
       });
-      let newGot = 0;
-      pks.forEach((pk, i) => {
-        if (!pk.classList.contains("got") && PKX[i] * el.scrollWidth / 4800 <= heroX + 24) {
-          pk.classList.add("got"); newGot++;
-        }
-      });
-      if (newGot) { gotCount += newGot; setGot(gotCount); }
+      collect(s);
       if (best !== lastBest) {
         document.body.dataset.zone = ZONES[best];
         setMode(MODES[best]);
@@ -371,16 +384,70 @@ function App() {
       setNext(s >= max - 4 ? "END OF LINE" : (nxt || STOPS[STOPS.length - 1]).label);
     };
 
+    /* game loop — keys held → accelerate, gravity pulls the hop down */
+    let driving = false;
+    const tick = () => {
+      if (!driving) { driving = true; el.style.scrollBehavior = "auto"; }
+      const dir = (held.has("d") || held.has("arrowright") ? 1 : 0) - (held.has("a") || held.has("arrowleft") ? 1 : 0);
+      const cap = held.has("shift") ? 15 : 9;
+      if (dir) vel = Math.max(-cap, Math.min(cap, vel + dir * 0.55));
+      else { vel *= 0.9; if (Math.abs(vel) < 0.08) vel = 0; }
+      if (vel) el.scrollLeft += vel;
+      if (!grounded) {
+        jumpY += vY; vY -= 0.55;
+        if (jumpY <= 0) { jumpY = 0; vY = 0; grounded = true; }
+      }
+      wrap.style.transform = `translateX(-50%) translateY(${-jumpY}px)`;
+      if (vel || !grounded || held.size) collect(el.scrollLeft);
+      if (vel || !grounded || held.size) raf = requestAnimationFrame(tick);
+      else { raf = 0; driving = false; el.style.scrollBehavior = ""; }
+    };
+    const jump = () => { if (grounded) { grounded = false; vY = 9.5; if (!raf) raf = requestAnimationFrame(tick); } };
+    const KEYS = ["w", "a", "s", "d", "arrowup", "arrowleft", "arrowright", "arrowdown", " ", "shift"];
+    const down = (e) => {
+      const k = e.key.toLowerCase();
+      if (!KEYS.includes(k) || e.target.closest("input,textarea,select,[contenteditable]")) return;
+      if (k === " " && e.target.closest("button,a")) return; // keep native button/link activation
+      e.preventDefault();
+      if (k === "w" || k === "arrowup" || k === " ") jump();
+      else if (!held.has(k)) { held.add(k); if (!raf) raf = requestAnimationFrame(tick); }
+    };
+    const up = (e) => held.delete(e.key.toLowerCase());
+    const blur = () => held.clear();
+
+    /* tap = hop on touch screens */
+    let t0 = 0, tx = 0;
+    const ts = (e) => { t0 = e.timeStamp; tx = e.changedTouches[0].clientX; };
+    const te = (e) => {
+      if (e.target.closest("button,a")) return;
+      if (e.timeStamp - t0 < 240 && Math.abs(e.changedTouches[0].clientX - tx) < 12) jump();
+    };
+
+    const onWheel = (e) => {
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { el.scrollLeft += e.deltaY; e.preventDefault(); }
+    };
+
     el.addEventListener("wheel", onWheel, { passive: false });
     el.addEventListener("scroll", onScroll);
+    el.addEventListener("touchstart", ts, { passive: true });
+    el.addEventListener("touchend", te, { passive: true });
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    window.addEventListener("blur", blur);
     onScroll();
     const h = location.hash.slice(1);
     if (h) document.getElementById(h)?.scrollIntoView({ inline: "center", behavior: "instant" });
     else if (matchMedia("(min-width:900px)").matches)
       el.querySelector("#stop-depot .marker")?.focus();
     return () => {
+      if (raf) cancelAnimationFrame(raf);
       el.removeEventListener("wheel", onWheel);
       el.removeEventListener("scroll", onScroll);
+      el.removeEventListener("touchstart", ts);
+      el.removeEventListener("touchend", te);
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+      window.removeEventListener("blur", blur);
     };
   }, []);
 
@@ -412,7 +479,7 @@ function App() {
         <span className="plate-lg">NIGHT LINE · echo2045</span>
         <span className="next">NEXT <i className="go">▸</i> {next}</span>
         <span className="mode">MODE ▸ {mode}</span>
-        <span key={got} className="score" aria-label={got + " of " + PKX.length + " stars collected"}>★ {got}/{PKX.length}</span>
+        <span key={got} className="score" aria-label={got + " of " + PKS.length + " stars collected"}>★ {got}/{PKS.length}</span>
         <span className="flexfill" />
         <nav>
           {STOPS.slice(1, 8).map((s) => <a key={s.id} href={"#stop-" + s.id}>{s.label}</a>)}
@@ -422,7 +489,7 @@ function App() {
       <div className="routeline">
         <div className="fillbar"><i ref={fill} /></div>
         <div className="stops">{STOPS.map((s) => <a key={s.id} href={"#stop-" + s.id} style={{ left: (s.x / 4800 * 100) + "%" }} aria-label={s.label} />)}</div>
-        <p className="drive">scroll or drag to drive →</p>
+        <p className="drive">scroll · drag · WASD to drive · space to hop · shift to sprint</p>
       </div>
 
       <div className="boot"><b>NIGHT LINE</b><span>loading route · echo2045</span></div>
