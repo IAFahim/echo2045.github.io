@@ -355,8 +355,11 @@ function App() {
     const H = { x: 170, y: 0, vx: 0, vy: 0, ground: "road", jumps: 0, face: 1, dropT: 0, dropP: null, onPlat: null, coyote: 0, jumpAt: 0 };
     let lastUser = 0, lastNext = "", raf = 0, prevT = 0;
     const bolts = []; // {x,y,dx,dy,el,life}
+    const nades = []; // {x,y,vx,vy,el,fuse}
+    let shakeUntil = 0;
     const bus = { x: 900, v: 1.5, dir: 1 }; // ambient traffic — the night bus loops the route
     const busPlat = [0, 0, 551, "bus"]; // stable identity so S can drop through the roof
+    const RM = matchMedia("(prefers-reduced-motion:reduce)").matches;
 
     const scaleX = () => el.scrollWidth / 4800, scaleY = () => el.clientHeight / 720;
     const feetY = () => 612 - H.y; // world-y of the hero's feet
@@ -381,6 +384,58 @@ function App() {
       const [x, y] = CRATES[i];
       burst(x + 13, y + 13);
       addGot(1);
+    };
+
+    /* sparks — tiny feedback particles where a bolt dies or a grenade pops */
+    const sparks = (ux, uy, n, cls) => {
+      for (let i = 0; i < n; i++) {
+        const s = document.createElement("i");
+        s.className = "spark " + (cls || "");
+        s.style.left = (ux / 4800 * 100) + "%";
+        s.style.top = (uy / 720 * 100) + "%";
+        s.style.setProperty("--dx", (Math.random() * 70 - 35) + "px");
+        s.style.setProperty("--dy", (-12 - Math.random() * 46) + "px");
+        fx.appendChild(s);
+        setTimeout(() => s.remove(), 500);
+      }
+    };
+
+    /* grenade detonation: ring, fire shards, AOE pickups, knockback, nitro bus */
+    const explode = (x, y) => {
+      const b = document.createElement("i");
+      b.className = "boom";
+      b.style.left = (x / 4800 * 100) + "%";
+      b.style.top = (y / 720 * 100) + "%";
+      fx.appendChild(b);
+      setTimeout(() => b.remove(), 600);
+      sparks(x, y, 9, "fire");
+      crateEls.forEach((c, ci) => {
+        if (c.classList.contains("broken")) return;
+        const [cx, cy] = CRATES[ci];
+        const dx = cx + 13 - x, dy = cy + 13 - y;
+        if (dx * dx + dy * dy < 150 * 150) breakCrate(ci);
+      });
+      pks.forEach((pk, pi) => {
+        if (pk.classList.contains("got")) return;
+        const dx = PKS[pi][0] - x, dy = PKS[pi][1] - y;
+        if (dx * dx + dy * dy < 150 * 150) { pk.classList.add("got"); addGot(1); }
+      });
+      /* blast launches him — grenade-jumping is a feature */
+      const hx = H.x - x, hy = (feetY() - 42) - y;
+      const hd = Math.hypot(hx, hy);
+      if (hd < 170) {
+        const k = 1 - hd / 170;
+        H.vx += (hd ? hx / hd : H.face) * 15 * k;
+        H.vy = Math.max(H.vy, 4 + 12 * k);
+        H.ground = "air"; H.onPlat = null;
+      }
+      /* bus caught in the blast gets nitro */
+      if (x > busPlat[0] - 60 && x < busPlat[1] + 60 && y > 430) {
+        bus.v = Math.min(6, bus.v * 2.4);
+        traf.classList.add("nitro");
+        setTimeout(() => { bus.v = 1.5; traf.classList.remove("nitro"); }, 2200);
+      }
+      if (!RM) shakeUntil = performance.now() + 300;
     };
 
     /* scroll → parallax + signpost proximity (camera dressing, hero-independent) */
@@ -520,8 +575,35 @@ function App() {
           const dx = PKS[pi][0] - b.x, dy = PKS[pi][1] - b.y;
           if (dx * dx + dy * dy < 22 * 22) { pk.classList.add("got"); addGot(1); dead = true; }
         });
-        if (dead) { b.el.remove(); bolts.splice(i, 1); }
+        /* hitting the bus spooks the driver — nitro boost */
+        if (!dead && b.x > busPlat[0] - 8 && b.x < busPlat[1] + 10 && b.y > 500 && b.y < 615) {
+          bus.v = Math.min(5.5, bus.v * 1.7);
+          traf.classList.add("nitro");
+          setTimeout(() => { bus.v = 1.5; traf.classList.remove("nitro"); }, 1600);
+          dead = true;
+        }
+        if (dead) { sparks(b.x, b.y, 3); b.el.remove(); bolts.splice(i, 1); }
       }
+
+      /* grenades arc, bounce, and pop */
+      for (let i = nades.length - 1; i >= 0; i--) {
+        const n = nades[i];
+        n.vy += 0.5 * dt;
+        n.x += n.vx * dt; n.y += n.vy * dt;
+        if (n.y > 604) { n.y = 604; n.vy = Math.abs(n.vy) > 2.5 ? -Math.abs(n.vy) * 0.52 : 0; n.vx *= 0.8; }
+        for (const p of PLATS.concat([busPlat])) {
+          if (n.vy > 0 && n.y - n.vy * dt <= p[2] && n.y >= p[2] && n.x > p[0] && n.x < p[1]) {
+            n.y = p[2]; n.vy = -Math.abs(n.vy) * 0.52; n.vx *= 0.85;
+          }
+        }
+        n.fuse -= dt;
+        n.el.style.left = (n.x / 4800 * 100) + "%";
+        n.el.style.top = (n.y / 720 * 100) + "%";
+        if (n.fuse <= 0 || n.x < 0 || n.x > 4800) { explode(n.x, n.y); n.el.remove(); nades.splice(i, 1); }
+      }
+
+      /* explosion camera shake */
+      if (now < shakeUntil) el.scrollLeft += (Math.random() - 0.5) * 5;
 
       syncHero();
       raf = requestAnimationFrame(tick);
@@ -530,7 +612,7 @@ function App() {
 
     /* pressing jump just records intent — the tick resolves buffer/coyote */
     const jump = () => { H.jumpAt = performance.now(); };
-    const KEYS = ["w", "a", "s", "d", "arrowup", "arrowleft", "arrowright", "arrowdown", " ", "shift"];
+    const KEYS = ["w", "a", "s", "d", "g", "arrowup", "arrowleft", "arrowright", "arrowdown", " ", "shift"];
     const down = (e) => {
       const k = e.key.toLowerCase();
       if (!KEYS.includes(k) || e.target.closest("input,textarea,select,[contenteditable]")) return;
@@ -538,6 +620,7 @@ function App() {
       e.preventDefault();
       lastUser = 0; // reclaim the camera
       if (k === "w" || k === "arrowup" || k === " ") { if (!e.repeat) jump(); held.add(k); }
+      else if (k === "g") { if (!e.repeat) lobNade(H.x + H.face * 14, feetY() - 55, H.face * 11, -8.5); }
       else if (k === "s" || k === "arrowdown") { if (H.ground === "plat" || H.ground === "bus") { H.dropT = performance.now() + 380; H.dropP = H.onPlat; H.ground = "air"; H.y -= 2; } }
       else held.add(k);
     };
@@ -551,7 +634,7 @@ function App() {
 
     /* click/tap = fire a bolt toward the pointer (tap also hops on touch) */
     const fire = (e) => {
-      if (e.target.closest(".hud,.routeline,.poi,button,a")) return;
+      if (e.button !== 0 || e.target.closest(".hud,.routeline,.poi,button,a")) return;
       if (e.pointerType === "touch") jump();
       const r = el.getBoundingClientRect();
       const tx = (el.scrollLeft + e.clientX - r.left) / scaleX();
@@ -566,6 +649,25 @@ function App() {
       if (bolts.length > 8) { bolts[0].el.remove(); bolts.shift(); }
     };
 
+    /* grenades: right-click / long-press lobs one at the pointer, G throws forward */
+    const lobNade = (x, y, vx, vy) => {
+      const n = document.createElement("i");
+      n.className = "nade";
+      fx.appendChild(n);
+      nades.push({ x, y, vx, vy, el: n, fuse: 80 });
+      if (nades.length > 4) { nades[0].el.remove(); nades.shift(); }
+    };
+    const throwNade = (e) => {
+      if (e.target.closest(".hud,.routeline,.poi,button,a,input,textarea,select")) return;
+      e.preventDefault();
+      const r = el.getBoundingClientRect();
+      const tx = (el.scrollLeft + e.clientX - r.left) / scaleX();
+      const ty = (e.clientY - r.top) / scaleY();
+      const ox = H.x, oy = feetY() - 55;
+      const d = Math.hypot(tx - ox, ty - oy) || 1;
+      lobNade(ox, oy, (tx - ox) / d * 13, (ty - oy) / d * 13 - 4.5);
+    };
+
     const onWheel = (e) => {
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { lastUser = performance.now(); el.scrollLeft += e.deltaY; e.preventDefault(); }
     };
@@ -575,6 +677,7 @@ function App() {
     el.addEventListener("scroll", onScroll);
     el.addEventListener("pointermove", markUser);
     window.addEventListener("pointerdown", fire);
+    window.addEventListener("contextmenu", throwNade);
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     window.addEventListener("blur", blur);
@@ -590,6 +693,7 @@ function App() {
       el.removeEventListener("scroll", onScroll);
       el.removeEventListener("pointermove", markUser);
       window.removeEventListener("pointerdown", fire);
+      window.removeEventListener("contextmenu", throwNade);
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
       window.removeEventListener("blur", blur);
@@ -636,7 +740,7 @@ function App() {
       <div className="routeline">
         <div className="fillbar"><i ref={fill} /></div>
         <div className="stops">{STOPS.map((s) => <a key={s.id} href={"#stop-" + s.id} style={{ left: (s.x / 4800 * 100) + "%" }} aria-label={s.label} />)}</div>
-        <p className="drive">AD run · W/space jump ×2 · hold to glide · S drop · click to shoot</p>
+        <p className="drive">AD run · W jump ×2 · hold glide · S drop · click shoot · G/right-click grenade</p>
       </div>
 
       <div className="boot"><b>NIGHT LINE</b><span>loading route · echo2045</span></div>

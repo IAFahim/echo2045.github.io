@@ -363,6 +363,32 @@ circle.host{fill:#dfe8ff;stroke:none}
   animation:shardfly .75s ease-out forwards;
 }
 @keyframes shardfly{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) rotate(340deg);opacity:0}}
+
+/* grenade + blast */
+.nade{
+  position:absolute;width:11px;height:11px;margin:-5px 0 0 -5px;border-radius:50%;
+  background:radial-gradient(circle at 32% 30%,#3d4f78,#0c1426 70%);
+  box-shadow:0 0 7px rgba(255,150,60,.85);
+}
+.nade::after{
+  content:"";position:absolute;left:7px;top:-3px;width:4px;height:4px;border-radius:50%;
+  background:#ffce7a;animation:flick 0.16s infinite;
+}
+@keyframes flick{0%,100%{opacity:1}50%{opacity:.15}}
+.boom{
+  position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;
+  border:3px solid #ffce7a;background:radial-gradient(circle,rgba(255,200,110,.9),rgba(255,140,60,0) 70%);
+  box-shadow:0 0 34px rgba(255,170,80,.85);
+  animation:boomx .5s cubic-bezier(.16,1,.3,1) forwards;pointer-events:none;
+}
+@keyframes boomx{0%{transform:scale(.4);opacity:1}60%{opacity:.9}100%{transform:scale(13);opacity:0}}
+.spark{
+  position:absolute;width:4px;height:4px;border-radius:1px;background:#ffe9a8;
+  animation:shardfly .45s ease-out forwards;
+}
+.spark.fire{background:#ffab5e;box-shadow:0 0 6px rgba(255,170,80,.9);width:5px;height:5px}
+.traffic.nitro .bus{animation-duration:.45s}
+.traffic.nitro{filter:drop-shadow(0 0 16px rgba(79,216,255,.75))}
 .hero .leg,.hero .arm{stroke:#dfe8ff;stroke-width:6;stroke-linecap:round;fill:none}
 .hero .leg{transform-box:fill-box;transform-origin:top}
 .heropin.run .leg{animation:step .45s ease-in-out infinite alternate}
