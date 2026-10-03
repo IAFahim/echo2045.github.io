@@ -1,45 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { LINKS, STOPS } from "./content.js";
 import "./style.css";
-
-/* ─── Nafis: drop your email here and the LAST STOP board gains a mail exit ─── */
-const LINKS = {
-  github: "https://github.com/echo2045",
-  linkedin: "https://www.linkedin.com/in/nafis-forkan-b24922184",
-  email: "",
-};
-
-/* Stops along the night line. x = position along the 4800-unit world. */
-const STOPS = [
-  { id: "depot", x: 590, label: "Depot", title: "Ghost Interactive",
-    lines: ["Game programmer — Unity, Unreal Engine, game systems.", "Live titles, shipped and maintained at scale."],
-    tag: "day job" },
-  { id: "scale", x: 940, label: "10M+ Scale", title: "Live at Scale",
-    lines: ["Bus Simulator Bangladesh — updating & maintaining a title with 10M+ downloads.", "Optimization, bug fixing, Addressables, Cloud Content Delivery."],
-    links: [["Play Store", "https://play.google.com/store/apps/details?id=com.GhostInteractive.BusSimulatorBangladesh"]], tag: "main quest" },
-  { id: "dhaka", x: 1420, label: "Endless Dhaka", title: "Endless Dhaka",
-    lines: ["Complete remake and release of the mobile racing game.", "Contributed to ~1M new downloads."],
-    links: [["Play Store", "https://play.google.com/store/apps/details?id=com.GhostInteractive.EndlessDhaka"]], tag: "main quest" },
-  { id: "stadium", x: 2080, label: "Esports Arena", title: "Esports Ops",
-    lines: ["10+ online tournaments · 5+ LAN · 2 national qualifiers hosted.", "500+ players supported · 24+ competitive teams managed.", "National team taken to international events."],
-    tag: "the other career" },
-  { id: "lab", x: 2760, label: "Research Lab", title: "Stinger — IEEE",
-    lines: ["3D asymmetric multiplayer serious game teaching dengue prevention in rural Bangladesh.", "Published at SNPD 2025 — IEEE, Busan."],
-    links: [["Read paper", "https://ieeexplore.ieee.org/document/11313522"]], tag: "research quest" },
-  { id: "truck", x: 3300, label: "Truck Depot", title: "Truck Simulator BD",
-    lines: ["Custom traffic system designed and programmed for realistic simulation.", "Game systems built for player experience."],
-    tag: "main quest" },
-  { id: "crane", x: 3780, label: "Under Construction", title: "In the Pipeline",
-    lines: ["2 upcoming games in development.", "Watch this skyline."],
-    tag: "soon" },
-  { id: "arcade", x: 4180, label: "Jam Arcade", title: "Side Quests",
-    lines: ["Speak-and-Play — voice-controlled gaming for differently-abled players.", "Retsnom.Inc — befriend monsters · Polar Bear Run — BCGameJam 2020 · Multiplayer Race — Photon PUN."],
-    links: [["Browse repos", "https://github.com/echo2045?tab=repositories"]], tag: "side quests" },
-  { id: "terminus", x: 4620, label: "Last Stop", title: "Say Hello",
-    lines: ["Party slot open — studios, teams, collaborators.", "All lines terminate here."],
-    links: [["GitHub", "https://github.com/echo2045"], ["LinkedIn", "https://www.linkedin.com/in/nafis-forkan-b24922184"]],
-    tag: "terminus" },
-];
 
 /* mid skyline: one long silhouette path (x 0–4800) */
 const SKY = "M0 620V430h90v190zm90-40h60v230H90zm60-90h70v320h-70zm70 30h60v290h-60zm60-70h90v360h-90zm90 20h80v340h-80zm80-60h70v400h-70zm70 40h60v360h-60zm60-90h100v450H860zm100 30h70v420h-70zm70-40h80v460h-80zm80 60h90v400h-90zm90-30h70v430h-70zm70 50h60v380h-60zm60-80h90v460h-90zm90 40h80v420h-80zm80-60h70v480h-70zm70 70h90v410h-90zm90-50h80v460h-80zm80 60h70v400h-70zm70-80h90v480h-90zm90 50h60v430h-60zm60-60h80v490h-80zm80 30h90v460h-90zm90-40h70v500h-70zm70 60h80v440h-80zm80-70h90v510h-90zm90 40h80v470h-80zm80-60h70v530h-70zm70 70h90v460h-90zm90-40h80v500h-80zm80 60h70v440h-70zm70-60h90v500h-90zm90 30h80v470h-80zm80-50h70v520h-70zm70 60h90v460h-90zm90-40h80v500h-80zm80 50h70v450h-70zm70-60h90v510h-90zm90 40h80v470h-80zm80-70h70v540h-70zm70 60h90v480h-90zm90-30h80v510h-80zm80 40h70v470h-70zm70-50h90v520h-90zm90 30h80v490h-80zm80-60h70v550h-70zm70 70h90v480h-90zm90-40h80v520h-80zm80 50h70v470h-70zm70-60h90v530h-90zm90 30h80v500h-80z";
@@ -210,6 +172,13 @@ function World() {
       <rect x="2680" y="622" width="160" height="50" fill="#39d98a" opacity=".07" filter="url(#soft)" />
       <rect x="4090" y="622" width="180" height="50" fill="#ff7ad9" opacity=".08" filter="url(#soft)" />
 
+      {/* buffer stop — the physical end of the line */}
+      <g transform="translate(4740,0)">
+        <path d="M0 620v-26h44l-30-44 M0 594h44 M14 620v-24 M30 620v-24" className="bumper" />
+        <rect x="-4" y="594" width="52" height="10" className="hazard" />
+        <rect x="-4" y="594" width="10" height="10" className="hazard alt" /><rect x="16" y="594" width="10" height="10" className="hazard alt" />
+      </g>
+
       {/* world ends fade into dark */}
       <rect x="0" y="0" width="140" height="720" fill="url(#fadeL)" />
       <rect x="4660" y="0" width="140" height="720" fill="url(#fadeR)" />
@@ -259,10 +228,43 @@ function Stop({ s, i, n }) {
         <p className="ptag">{s.tag} <span className="stopno">{String(i + 1).padStart(2, "0")} / {String(n).padStart(2, "0")}</span></p>
         <h3>{s.title}</h3>
         {s.lines.map((l) => <p key={l}>{l}</p>)}
+        <div className="skills">{s.skills.map((sk) => <i key={sk}>{sk}</i>)}</div>
+        <p className="learn">▸ learned: {s.learned}</p>
         {links.map(([t, u]) => <a key={t} className="btn" href={u} target="_blank" rel="noreferrer">{t} ↗</a>)}
       </div>
     </div>
   );
+}
+
+/* synth ambience — rain hiss + engine hum, no audio files */
+function makeAmbience() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
+  const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const noise = ctx.createBufferSource(); noise.buffer = buf; noise.loop = true;
+  const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 3800; bp.Q.value = 0.35;
+  const ng = ctx.createGain(); ng.gain.value = 0.05;
+  noise.connect(bp); bp.connect(ng); ng.connect(master); noise.start();
+  const hum = ctx.createOscillator(); hum.type = "sine"; hum.frequency.value = 52;
+  const hg = ctx.createGain(); hg.gain.value = 0.028;
+  hum.connect(hg); hg.connect(master); hum.start();
+  const hum2 = ctx.createOscillator(); hum2.type = "triangle"; hum2.frequency.value = 104;
+  const h2 = ctx.createGain(); h2.gain.value = 0.012;
+  hum2.connect(h2); h2.connect(master); hum2.start();
+  return { ctx, master };
+}
+function chime(a) { // soft two-tone arrival bell
+  const t = a.ctx.currentTime;
+  [880, 659].forEach((f, i) => {
+    const o = a.ctx.createOscillator(), g = a.ctx.createGain();
+    o.type = "sine"; o.frequency.value = f;
+    g.gain.setValueAtTime(0, t + i * 0.14);
+    g.gain.linearRampToValueAtTime(0.07, t + i * 0.14 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.14 + 0.5);
+    o.connect(g); g.connect(a.master); o.start(t + i * 0.14); o.stop(t + i * 0.14 + 0.6);
+  });
 }
 
 function App() {
@@ -271,12 +273,25 @@ function App() {
   const busEl = useRef(null);
   const farEl = useRef(null);
   const fgEl = useRef(null);
+  const audio = useRef(null);
   const [next, setNext] = useState(STOPS[0].label);
+  const [sound, setSound] = useState(false);
+
+  const toggleSound = () => {
+    if (!audio.current) audio.current = makeAmbience();
+    const a = audio.current;
+    a.ctx.resume();
+    setSound((on) => {
+      a.master.gain.linearRampToValueAtTime(on ? 0 : 1, a.ctx.currentTime + 0.4);
+      return !on;
+    });
+  };
 
   useEffect(() => {
     const el = world.current;
     const pois = [...el.querySelectorAll(".poi")];
     const dots = [...document.querySelectorAll(".stops a")];
+    let lastBest = -1;
     const onWheel = (e) => {
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { el.scrollLeft += e.deltaY; e.preventDefault(); }
     };
@@ -295,10 +310,26 @@ function App() {
         p.style.setProperty("--near", Math.max(0, 1 - d / (cx * 1.1)).toFixed(2));
         if (d < bd) { bd = d; best = i; }
       });
+      if (best !== lastBest && lastBest !== -1 && audio.current) chime(audio.current);
+      lastBest = best;
       dots.forEach((d, i) => d.classList.toggle("here", i === best));
       const nxt = STOPS.find((st) => st.x / 4800 * el.scrollWidth > s + el.clientWidth * 0.62);
-      setNext((nxt || STOPS[STOPS.length - 1]).label);
+      setNext(s >= max - 4 ? "END OF LINE" : (nxt || STOPS[STOPS.length - 1]).label);
     };
+
+    /* attract mode — the bus drives itself until the visitor takes the wheel */
+    let auto = !matchMedia("(prefers-reduced-motion:reduce)").matches;
+    let raf;
+    const drive = () => {
+      if (!auto) return;
+      const max = el.scrollWidth - el.clientWidth;
+      if (el.scrollLeft < max) { el.scrollLeft += 0.55; raf = requestAnimationFrame(drive); }
+    };
+    const handover = () => { auto = false; cancelAnimationFrame(raf); };
+    if (auto && !location.hash) raf = requestAnimationFrame(drive);
+    ["wheel", "touchstart", "pointerdown"].forEach((t) => el.addEventListener(t, handover));
+    window.addEventListener("keydown", handover);
+
     el.addEventListener("wheel", onWheel, { passive: false });
     el.addEventListener("scroll", onScroll);
     onScroll();
@@ -306,7 +337,12 @@ function App() {
     if (h) document.getElementById(h)?.scrollIntoView({ inline: "center", behavior: "instant" });
     else if (matchMedia("(min-width:900px)").matches)
       el.querySelector("#stop-depot .marker")?.focus();
-    return () => { el.removeEventListener("wheel", onWheel); el.removeEventListener("scroll", onScroll); };
+    return () => {
+      handover();
+      window.removeEventListener("keydown", handover);
+      el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
   return (
@@ -333,6 +369,7 @@ function App() {
       <header className="hud">
         <span className="plate-lg">NIGHT LINE · echo2045</span>
         <span className="next">NEXT ▸ {next}</span>
+        <button className={"snd" + (sound ? " on" : "")} onClick={toggleSound} aria-pressed={sound}>{sound ? "SOUND ON" : "SOUND OFF"}</button>
         <span className="flexfill" />
         <nav>
           {STOPS.slice(1, 8).map((s) => <a key={s.id} href={"#stop-" + s.id}>{s.label}</a>)}

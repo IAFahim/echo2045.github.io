@@ -9,6 +9,14 @@ npm install
 npm run dev
 ```
 
+## Edit the world
+
+All content lives in **`src/content.js`** — one object per stop.
+Copy a block, give it an `id` and an `x` position (0–4800 along the line),
+and it appears on the route: nav, progress dots, and the `NEXT ▸` display
+update themselves. Each stop carries `lines` (the story), `skills` (chips),
+`learned` (the takeaway), and optional `links`.
+
 ## Design tooling
 
 This repo ships [PRODUCT.md](PRODUCT.md) (product truth) and vendors the
