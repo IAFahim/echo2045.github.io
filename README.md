@@ -1,6 +1,6 @@
 # echo2045.github.io
 
-Personal portfolio — a career rendered as an enamel transit map. Vite + React, deployed to GitHub Pages on push to `main`.
+Personal portfolio — a night drive through a career. One continuous city scene: scroll or drag to drive past Ghost Interactive's depot, the esports arena, the research lab, and a construction zone. Vite + React, deployed to GitHub Pages on push to `main`.
 
 ## Dev
 

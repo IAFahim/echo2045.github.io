@@ -1,243 +1,233 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import "./style.css";
 
-/* ─── Nafis: drop your email here and the SEND INVITE button gains a mail option ─── */
+/* ─── Nafis: drop your email here and the LAST STOP board gains a mail exit ─── */
 const LINKS = {
   github: "https://github.com/echo2045",
   linkedin: "https://www.linkedin.com/in/nafis-forkan-b24922184",
-  email: "", // e.g. "you@example.com"
+  email: "",
 };
 
-const PLAYER = {
-  handle: "echo2045",
-  name: "Nafis Forkan",
-  cls: "Gameplay Programmer",
-  guild: "Ghost Interactive",
-  base: "Dhaka, Bangladesh",
-  status: "online — shipping games",
-};
-
-const ACHIEVEMENTS = {
-  dev: {
-    title: "Development",
-    rows: [
-      ["dlc", "Live at Scale", "updating & maintaining a title with", "10M+", "downloads"],
-      ["bolt", "Growth Engine", "new downloads contributed — Endless Dhaka", "~1M", ""],
-      ["doc", "Published", "IEEE paper on serious games — Stinger, SNPD 2025", "1", ""],
-      ["cart", "Triple Threat", "games live right now", "3", ""],
-      ["lock", "In the Pipeline", "upcoming games in development", "2", ""],
-    ],
-  },
-  esp: {
-    title: "Esports Ops",
-    rows: [
-      ["globe", "Tournament Arc", "online tournaments organised", "10+", ""],
-      ["lan", "LAN Veteran", "LAN tournaments organised", "5+", ""],
-      ["users", "Community Builder", "players supported", "500+", ""],
-      ["flag", "Team Wrangler", "competitive teams managed", "24+", ""],
-      ["medal", "National Stage", "national qualifiers hosted", "2", ""],
-      ["star", "Represented", "national team at international events", "INTL", ""],
-    ],
-  },
-};
-
-const QUESTS = [
-  {
-    name: "Bus Simulator Bangladesh",
-    kind: "Main quest · complete",
-    spec: "Unity · Mobile · Live · Simulation",
-    text: "Live mobile simulation game with 10M+ downloads. Optimization, bug fixing, Addressables, Cloud Content Delivery and traffic-system improvements.",
-    reward: "10M+ downloads",
-    url: "https://play.google.com/store/apps/details?id=com.GhostInteractive.BusSimulatorBangladesh",
-  },
-  {
-    name: "Endless Dhaka",
-    kind: "Main quest · complete",
-    spec: "Unity · Mobile · Racing",
-    text: "Complete remake and release of a mobile racing game through the streets of Dhaka.",
-    reward: "~1M new downloads",
-    url: "https://play.google.com/store/apps/details?id=com.GhostInteractive.EndlessDhaka",
-  },
-  {
-    name: "Truck Simulator Bangladesh",
-    kind: "Main quest · complete",
-    spec: "Unity · Mobile · Game Systems",
-    text: "Custom traffic system designed and programmed for realistic simulation and player experience.",
-    reward: "traffic AI system",
-  },
-  {
-    name: "Stinger",
-    kind: "Research quest · published",
-    spec: "Unreal Engine 5 · Multiplayer · Serious Game",
-    text: "3D asymmetric multiplayer game teaching dengue prevention in rural Bangladesh. Published at SNPD 2025, IEEE.",
-    reward: "IEEE publication",
-    url: "https://ieeexplore.ieee.org/document/11313522",
-  },
+/* Stops along the night line. x = position along the 4800-unit world. */
+const STOPS = [
+  { id: "depot", x: 590, label: "Depot", title: "Ghost Interactive",
+    lines: ["Game programmer — Unity, Unreal Engine, game systems.", "Live titles, shipped and maintained at scale."],
+    tag: "day job" },
+  { id: "scale", x: 780, label: "10M+ Scale", title: "Live at Scale",
+    lines: ["Bus Simulator Bangladesh — updating & maintaining a title with 10M+ downloads.", "Optimization, bug fixing, Addressables, Cloud Content Delivery."],
+    link: ["Play Store", "https://play.google.com/store/apps/details?id=com.GhostInteractive.BusSimulatorBangladesh"], tag: "main quest" },
+  { id: "dhaka", x: 1420, label: "Endless Dhaka", title: "Endless Dhaka",
+    lines: ["Complete remake and release of the mobile racing game.", "Contributed to ~1M new downloads."],
+    link: ["Play Store", "https://play.google.com/store/apps/details?id=com.GhostInteractive.EndlessDhaka"], tag: "main quest" },
+  { id: "stadium", x: 2080, label: "Esports Arena", title: "Esports Ops",
+    lines: ["10+ online tournaments · 5+ LAN · 2 national qualifiers hosted.", "500+ players supported · 24+ competitive teams managed.", "National team taken to international events."],
+    tag: "the other career" },
+  { id: "lab", x: 2760, label: "Research Lab", title: "Stinger — IEEE",
+    lines: ["3D asymmetric multiplayer serious game teaching dengue prevention in rural Bangladesh.", "Published at SNPD 2025 — IEEE, Busan."],
+    link: ["Read paper", "https://ieeexplore.ieee.org/document/11313522"], tag: "research quest" },
+  { id: "truck", x: 3300, label: "Truck Depot", title: "Truck Simulator BD",
+    lines: ["Custom traffic system designed and programmed for realistic simulation.", "Game systems built for player experience."],
+    tag: "main quest" },
+  { id: "crane", x: 3780, label: "Under Construction", title: "In the Pipeline",
+    lines: ["2 upcoming games in development.", "Watch this skyline."],
+    tag: "soon" },
+  { id: "arcade", x: 4180, label: "Jam Arcade", title: "Side Quests",
+    lines: ["Speak-and-Play — voice-controlled gaming for differently-abled players.", "Retsnom.Inc — befriend monsters · Polar Bear Run — BCGameJam 2020 · Multiplayer Race — Photon PUN."],
+    link: ["Browse repos", "https://github.com/echo2045?tab=repositories"], tag: "side quests" },
+  { id: "terminus", x: 4650, label: "Last Stop", title: "Say Hello",
+    lines: ["Party slot open — studios, teams, collaborators.", "All lines terminate here."],
+    link: ["GitHub", "https://github.com/echo2045"], tag: "terminus" },
 ];
 
-const SIDEQUESTS = [
-  {
-    name: "Speak-and-Play",
-    text: "Voice-controlled gaming — helps differently-abled people play without hands.",
-    url: "https://github.com/echo2045/Speak-and-Play",
-  },
-  {
-    name: "Retsnom.Inc",
-    text: "Befriend monsters in the quest for power.",
-    url: "https://github.com/echo2045/Retsnom.Inc",
-  },
-  {
-    name: "Polar Bear Run",
-    text: "BCGameJam 2020 jam entry.",
-    url: "https://github.com/echo2045/BCGameJam2020-Polar-Bear-Run",
-  },
-  {
-    name: "Multiplayer Race",
-    text: "Photon PUN multiplayer racing prototype.",
-    url: "https://github.com/echo2045/Task1---Multiplayer-Race",
-  },
-];
+const SKY = ["M0 620V430h90v190zm90-40h60v230H90zm60-90h70v320h-70zm70 30h60v290h-60zm60-70h90v360h-90zm90 20h80v340h-80zm80-60h70v400h-70zm70 40h60v360h-60zm60-90h100v450H860zm100 30h70v420h-70zm70-40h80v460h-80zm80 60h90v400h-90zm90-30h70v430h-70zm70 50h60v380h-60zm60-80h90v460h-90zm90 40h80v420h-80zm80-60h70v480h-70zm70 70h90v410h-90zm90-50h80v460h-80zm80 60h70v400h-70zm70-80h90v480h-90zm90 50h60v430h-60zm60-60h80v490h-80zm80 30h90v460h-90zm90-40h70v500h-70zm70 60h80v440h-80zm80-70h90v510h-90zm90 40h80v470h-80zm80-60h70v530h-70zm70 70h90v460h-90zm90-40h80v500h-80zm80 60h70v440h-70zm70-60h90v500h-90zm90 30h80v470h-80zm80-50h70v520h-70zm70 60h90v460h-90zm90-40h80v500h-80zm80 50h70v450h-70zm70-60h90v510h-90zm90 40h80v470h-80zm80-70h70v540h-70zm70 60h90v480h-90zm90-30h80v510h-80zm80 40h70v470h-70zm70-50h90v520h-90zm90 30h80v490h-80zm80-60h70v550h-70zm70 70h90v480h-90zm90-40h80v520h-80zm80 50h70v470h-70zm70-60h90v530h-90zm90 30h80v500h-80z"];
 
-/* authored icons — one stroke family, viewBox 24 */
-const I = {
-  dlc: "M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16",
-  bolt: "M13 2L5 14h5l-1 8 8-12h-5l1-8z",
-  doc: "M6 2h9l5 5v15H6V2zm9 0v5h5M9 12h8M9 16h8M9 8h3",
-  cart: "M3 21l3-3m-3 3l3 3-3-3zm0 0h18M9 3l6 6-2 5-5-2-6-6 2-5 5 2z",
-  lock: "M7 11V7a5 5 0 0110 0v4M5 11h14v10H5V11zm7 4v3",
-  globe: "M12 3a9 9 0 100 18 9 9 0 000-18zm-9 9h18M12 3c3 3 3 15 0 18-3-3-3-15 0-18z",
-  lan: "M4 5h16v10H4V5zm4 14h8m-4-4v4",
-  users: "M9 11a3.5 3.5 0 100-7 3.5 3.5 0 000 7zm7-1a3 3 0 100-6M3 20c0-4 2.5-6 6-6s6 2 6 6m2-8c2.5.5 4 2.5 4 4",
-  flag: "M5 21V4m0 1h13l-3 4 3 4H5",
-  medal: "M12 14a5 5 0 100-10 5 5 0 000 10zm-3.5-.5L6 21l6-3 6 3-2.5-7.5",
-  star: "M12 2l3 7 7 .5-5.4 4.7L18.5 22 12 17.8 5.5 22l1.9-7.8L2 9.5 9 9l3-7z",
-  pad: "M7 8h10a5 5 0 015 5v1a4 4 0 01-7 2.5L13.5 15h-3L9 16.5A4 4 0 012 14v-1a5 5 0 015-5zm1.5 2.5v3M7 12h3m6-1.5h.01M18 14h.01",
-  out: "M14 4h6v6m0-6L10 14M9 5H5a1 1 0 00-1 1v13a1 1 0 001 1h13a1 1 0 001-1v-4",
-};
-const Icon = ({ n }) => (
-  <svg viewBox="0 0 24 24" className="ic" aria-hidden="true">
-    <path d={I[n]} />
-  </svg>
-);
-
-function PlayerCard() {
-  return (
-    <section className="card player">
-      <div className="emblem" aria-hidden="true">
-        <svg viewBox="0 0 96 96">
-          <path d="M48 5 86 26v44L48 91 10 70V26L48 5z" className="hex" />
-          <path d="M48 5 86 26v44L48 91 10 70V26L48 5z" className="hex trace" pathLength="1" />
-          <path d="M30 63V35l15 28V35" className="glyph" />
-          <path d="M55 63V35h14M55 49h9" className="glyph thin" />
-        </svg>
-      </div>
-      <div className="who">
-        <p className="handle">// {PLAYER.handle}</p>
-        <h1>{PLAYER.name}</h1>
-        <p className="meta">
-          <span>{PLAYER.cls}</span><i>◆</i>
-          <span>{PLAYER.guild}</span><i>◆</i>
-          <span>{PLAYER.base}</span>
-        </p>
-        <p className="sub">Building games, gameplay systems and player-focused experiences —
-        and running the competitive scene around them.</p>
-      </div>
-      <div className="vstats">
-        <div><b>10M+</b><span>downloads served</span></div>
-        <div><b>15+</b><span>events run</span></div>
-        <div><b>UE5</b><span>current engine</span></div>
-      </div>
-      <p className="online"><i />{PLAYER.status}</p>
-    </section>
-  );
+function Skyline() {
+  return <path className="skyline" d={SKY} />;
 }
 
-function AchGroup({ id, g }) {
+/* the scrolling world itself — svg scenery at exact 4800×720 scale */
+function World() {
   return (
-    <section className="card achgroup" aria-label={g.title + " achievements"}>
-      <header><Icon n="medal" />{g.title}<em>{g.rows.length} unlocked</em></header>
-      {g.rows.map(([ic, name, desc, val, unit]) => (
-        <div className="ach" key={name}>
-          <span className="aicon"><Icon n={ic} /></span>
-          <span className="atext"><b>{name}</b><small>{desc}{unit ? ` ${unit}` : ""}</small></span>
-          <b className="aval">{val}</b>
-        </div>
+    <svg className="world-svg" viewBox="0 0 4800 720" preserveAspectRatio="none" aria-hidden="true">
+      {/* mid skyline with lit windows */}
+      <Skyline />
+      {/* sparse ground-floor lights — kept below every roofline so none float */}
+      <g className="citylights">{[...Array(140)].map((_, i) => {
+        const x = 40 + ((i * 137) % 4640), y = 545 + ((i * 89) % 55);
+        return i % 4 === 0 ? <rect key={i} x={x} y={y} width="7" height="10" className="lit" /> : null;
+      })}</g>
+
+      {/* named buildings */}
+      <g className="b intro" transform="translate(60,0)">
+        <rect x="0" y="340" width="330" height="280" className="blk" />
+        <rect x="14" y="368" width="302" height="110" className="signboard" />
+        <text x="165" y="415" className="neon cyan" textAnchor="middle" fontSize="30">NAFIS FORKAN</text>
+        <text x="165" y="452" className="neon amber" textAnchor="middle" fontSize="14">GAMEPLAY PROGRAMMER</text>
+        {[...Array(6)].map((_, i) => <rect key={i} x={30 + i * 48} y="510" width="20" height="30" className={i % 2 ? "w" : "w lit"} />)}
+      </g>
+
+      <g className="b depot" transform="translate(480,0)">
+        <rect x="0" y="380" width="220" height="240" className="blk" />
+        <rect x="16" y="410" width="188" height="60" className="signboard" />
+        <text x="110" y="447" className="neon cyan" textAnchor="middle">GHOST INTERACTIVE</text>
+        {[...Array(8)].map((_, i) => <rect key={i} x={20 + i * 22} y="490" width="12" height="16" className={i % 3 ? "w" : "w lit"} />)}
+      </g>
+
+      <g className="b stadium" transform="translate(1960,0)">
+        <ellipse cx="170" cy="560" rx="180" ry="58" className="blk" />
+        <rect x="-10" y="540" width="360" height="80" className="blk" />
+        <path d="M30 540 60 430 M310 540 340 430" className="mast" />
+        <path d="M60 432 30 620h120z" className="cone" />
+        <path d="M340 432 250 620h120z" className="cone" />
+        <circle cx="60" cy="428" r="7" className="flood" /><circle cx="340" cy="428" r="7" className="flood" />
+        <text x="170" y="588" className="neon amber" textAnchor="middle">ESPORTS ARENA</text>
+      </g>
+
+      <g className="b lab" transform="translate(2660,0)">
+        <rect x="0" y="330" width="200" height="290" className="blk" />
+        <rect x="70" y="290" width="60" height="40" className="blk" />
+        <path d="M100 290V220" className="mast" /><circle cx="100" cy="216" r="5" className="flood" />
+        <rect x="20" y="360" width="160" height="46" className="signboard" />
+        <text x="100" y="389" className="neon green" textAnchor="middle">RESEARCH LAB</text>
+        {[...Array(12)].map((_, i) => <rect key={i} x={22 + (i % 4) * 40} y={425 + Math.floor(i / 4) * 55} width="16" height="22" className={i % 4 ? "w" : "w lit"} />)}
+      </g>
+
+      {/* construction site for the upcoming titles */}
+      <g className="b site" transform="translate(3600,0)">
+        <rect x="0" y="440" width="150" height="180" className="frame" />
+        <path d="M0 485h150 M0 530h150 M0 575h150 M50 440v180 M100 440v180" className="frameln" />
+        <rect x="5" y="465" width="140" height="40" className="signboard" />
+        <text x="75" y="491" className="neon amber" textAnchor="middle" fontSize="12" letterSpacing="1">IN DEVELOPMENT</text>
+        <path d="M-40 620V300 M-60 620h40 M-40 300h30" className="cranebody" />
+        <path d="M-40 300 240 252 M-40 300 -80 380 M240 252 240 302" className="cable" />
+        <circle cx="-40" cy="296" r="6" className="beacon" />
+        <rect x="230" y="302" width="20" height="20" className="blk" />
+      </g>
+
+      <g className="b arcade" transform="translate(4080,0)">
+        <rect x="0" y="420" width="200" height="200" className="blk" />
+        <rect x="4" y="440" width="192" height="54" className="signboard" />
+        <text x="100" y="473" className="neon pink" textAnchor="middle" fontSize="21">JAM ARCADE</text>
+        <rect x="80" y="545" width="40" height="75" className="w lit" />
+        <rect x="24" y="520" width="28" height="36" className="w" /><rect x="148" y="520" width="28" height="36" className="w lit" />
+      </g>
+
+      {/* terminus gate */}
+      <g className="b terminus" transform="translate(4560,0)">
+        <path d="M0 620V480a60 60 0 01120 0v140h-30V488a30 30 0 00-60 0v132H0z" className="blk" />
+        <text x="60" y="560" className="neon cyan" textAnchor="middle">LAST STOP</text>
+      </g>
+
+      {/* street lights along the route */}
+      {[420, 980, 1700, 2460, 3050, 3560, 3980, 4520].map((x) => (
+        <g key={x} transform={`translate(${x},0)`} className="lamp">
+          <path d="M0 620V470" className="pole" />
+          <path d="M0 470h34" className="pole" />
+          <path d="M28 476 12 620h50L38 476z" className="conel" />
+          <circle cx="33" cy="478" r="4" className="bulb" />
+        </g>
       ))}
-    </section>
+
+      {/* the road */}
+      <rect x="0" y="620" width="4800" height="100" className="road" />
+      <rect x="0" y="612" width="4800" height="8" className="kerb" />
+      {[...Array(60)].map((_, i) => <rect key={i} x={i * 85} y="666" width="44" height="5" className="dash" />)}
+    </svg>
   );
 }
 
-function Quest({ q, side }) {
-  const inner = (
-    <>
-      <div className="qtop"><span className={"qkind" + (side ? " side" : "")}>{q.kind || "Side quest"}</span><span className="qspec">{q.spec}</span></div>
-      <h3>{q.name}</h3>
-      <p>{q.text}</p>
-      <div className="qbot">
-        {q.reward && <span className="reward"><Icon n="star" />{q.reward}</span>}
-        {q.url && <span className="qgo">View intel <Icon n="out" /></span>}
-      </div>
-    </>
+function Bus() {
+  return (
+    <svg className="bus" viewBox="0 0 240 96" aria-hidden="true">
+      <path d="M150 60 235 96h-95z" className="beamlight" />
+      <rect x="6" y="10" width="200" height="62" rx="10" className="body" />
+      <rect x="6" y="10" width="200" height="20" rx="10" className="band" />
+      <rect x="12" y="16" width="26" height="8" rx="2" className="dest" />
+      <text x="25" y="23" className="desttxt" textAnchor="middle">NAFIS</text>
+      {[0, 1, 2, 3].map((i) => <rect key={i} x={46 + i * 34} y="16" width="26" height="16" rx="3" className="winlit" />)}
+      <rect x="176" y="16" width="24" height="16" rx="3" className="winlit cab" />
+      <rect x="16" y="44" width="172" height="18" rx="4" className="panel" />
+      <text x="102" y="57" className="sidetxt" textAnchor="middle">GHOST · NIGHT LINE</text>
+      <circle cx="46" cy="74" r="14" className="wheel" /><circle cx="46" cy="74" r="6" className="hub" />
+      <circle cx="170" cy="74" r="14" className="wheel" /><circle cx="170" cy="74" r="6" className="hub" />
+      <rect x="202" y="40" width="8" height="12" rx="2" className="tail" />
+      <text x="112" y="86" className="plate" textAnchor="middle">NF-2045</text>
+    </svg>
   );
-  return q.url
-    ? <a className="card quest link" href={q.url} target="_blank" rel="noreferrer">{inner}</a>
-    : <article className="card quest">{inner}</article>;
+}
+
+function Stop({ s }) {
+  const edge = s.x < 500 ? "l" : s.x > 4300 ? "r" : undefined;
+  return (
+    <div className="poi" id={"stop-" + s.id} data-edge={edge} style={{ left: (s.x / 4800 * 100) + "%" }}>
+      <button className="marker" aria-haspopup="true">
+        <span className="board">{s.label}</span>
+        <i className="pole" /><i className="glow" />
+      </button>
+      <div className="panel" role="dialog" aria-label={s.title}>
+        <p className="ptag">{s.tag}</p>
+        <h3>{s.title}</h3>
+        {s.lines.map((l) => <p key={l}>{l}</p>)}
+        {s.link && <a className="btn" href={s.link[1]} target="_blank" rel="noreferrer">{s.link[0]} ↗</a>}
+      </div>
+    </div>
+  );
 }
 
 function App() {
+  const world = useRef(null);
+  const fill = useRef(null);
+  const busEl = useRef(null);
+
+  useEffect(() => {
+    const el = world.current;
+    const onWheel = (e) => {
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { el.scrollLeft += e.deltaY; e.preventDefault(); }
+    };
+    const onScroll = () => {
+      const max = el.scrollWidth - el.clientWidth;
+      if (fill.current) fill.current.style.width = (el.scrollLeft / max * 100) + "%";
+      if (busEl.current) busEl.current.style.setProperty("--spin", (el.scrollLeft / 9) + "deg");
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    el.addEventListener("scroll", onScroll);
+    onScroll();
+    const h = location.hash.slice(1);
+    if (h) document.getElementById(h)?.scrollIntoView({ inline: "center", behavior: "instant" });
+    else if (matchMedia("(min-width:900px)").matches)
+      el.querySelector("#stop-depot .marker")?.focus();
+    return () => { el.removeEventListener("wheel", onWheel); el.removeEventListener("scroll", onScroll); };
+  }, []);
+
   return (
     <>
-      <header className="topbar">
-        <span className="brand"><i className="sq" />{PLAYER.handle}</span>
+      <header className="hud">
+        <span className="plate-lg">NIGHT LINE · echo2045</span>
         <nav>
-          <a href="#achievements">Milestones</a>
-          <a href="#quests">Projects</a>
-          <a href="#invite">Contact</a>
+          {STOPS.slice(1, 8).map((s) => <a key={s.id} href={"#stop-" + s.id}>{s.label}</a>)}
         </nav>
       </header>
 
-      <main>
-        <div className="hero">
-          <PlayerCard />
-          <p className="hint">scroll to continue <i className="caret">▼</i></p>
+      <div className="sky">
+        <div className="moon" />
+        {[...Array(40)].map((_, i) => <i key={i} className="star" style={{ left: (i * 97 % 100) + "%", top: (i * 53 % 55) + "%", animationDelay: (i % 7) + "s" }} />)}
+      </div>
+
+      <div className="world" ref={world}>
+        <div className="track">
+          <World />
+          {STOPS.map((s) => <Stop key={s.id} s={s} />)}
         </div>
+      </div>
 
-        <p className="ticker"><i className="ok" />sys check — all systems nominal · 3 titles live · 2 in development</p>
+      <div className="buswrap"><div ref={busEl} className="buspin"><Bus /></div></div>
 
-        <section id="achievements" className="block">
-          <h2>Milestones <span>// achievements unlocked</span></h2>
-          <div className="grid2">
-            <AchGroup id="dev" g={ACHIEVEMENTS.dev} />
-            <AchGroup id="esp" g={ACHIEVEMENTS.esp} />
-          </div>
-        </section>
-
-        <section id="quests" className="block">
-          <h2>Shipped <span>// quest log</span></h2>
-          <div className="grid2 quests">
-            {QUESTS.map((q) => <Quest key={q.name} q={q} />)}
-          </div>
-        </section>
-
-        <section className="block">
-          <h2>Own work <span>// side quests — open source & jam builds</span></h2>
-          <div className="grid4">
-            {SIDEQUESTS.map((q) => <Quest key={q.name} q={q} side />)}
-          </div>
-        </section>
-
-        <footer id="invite" className="card finale">
-          <h2>Send invite</h2>
-          <p>Party slot open — studios, teams, collaborators.</p>
-          <div className="actions">
-            <a className="btn solid" href={LINKS.github} target="_blank" rel="noreferrer">GitHub <Icon n="out" /></a>
-            <a className="btn" href={LINKS.linkedin} target="_blank" rel="noreferrer">LinkedIn <Icon n="out" /></a>
-            {LINKS.email && <a className="btn" href={"mailto:" + LINKS.email}>Email</a>}
-          </div>
-          <p className="credits">© 2026 Nafis Forkan · echo2045 · no RNG involved in this build</p>
-        </footer>
-      </main>
+      <div className="routeline">
+        <div className="fillbar"><i ref={fill} /></div>
+        <div className="stops">{STOPS.map((s) => <a key={s.id} href={"#stop-" + s.id} style={{ left: (s.x / 4800 * 100) + "%" }} aria-label={s.label} />)}</div>
+        <p className="drive">scroll or drag to drive →</p>
+      </div>
     </>
   );
 }
