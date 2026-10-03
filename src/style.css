@@ -185,3 +185,103 @@ a{color:var(--cyan)}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}
 }
+
+/* ── depth layers ── */
+.farwrap{position:absolute;inset:0;z-index:0}
+.farline{position:absolute;inset:0;width:100%;height:100%;display:block}
+.far{fill:#0d1428;opacity:.5}
+.ant{stroke:#0d1428;stroke-width:5;fill:#0d1428;opacity:.5}
+
+.fgwrap{
+  position:fixed;top:0;bottom:0;left:0;height:100dvh;width:calc(100dvh * 7.7778);
+  z-index:11;pointer-events:none;
+}
+.fgline{width:100%;height:100%;display:block}
+.fgpost{stroke:#04060d;stroke-width:15;fill:#04060d}
+.fgpost.tree{stroke-width:20}
+.fgline .cable{stroke:#04060d;stroke-width:4;fill:none;opacity:.9}
+
+/* ── world dressing ── */
+.sheen{fill:rgba(150,175,235,.05)}
+.cat{fill:rgba(255,205,110,.5)}
+.door{fill:#070b18;stroke:rgba(140,190,255,.18)}
+.hazard{fill:rgba(255,184,77,.55)}
+.hazard.alt{fill:#141c30}
+.rick{fill:#123c26;stroke:#0a2417;stroke-width:1.5}
+.rickwin{fill:rgba(150,205,255,.3)}
+.rwheel{fill:#04060d;stroke:#16233f;stroke-width:2}
+.rlight{fill:#ffd98a}
+.flag{fill:#16233f}
+.shelter{fill:#0a0f22;stroke:rgba(140,190,255,.3);stroke-width:2}
+.bench{fill:#0d1530}
+.ticker{fill:rgba(255,190,90,.8);font-size:12px;letter-spacing:2px;font-family:"Chakra Petch",sans-serif}
+
+/* ── bus extras ── */
+.bus .shadow{fill:rgba(0,0,0,.55)}
+.bus .lightpool{fill:rgba(255,220,140,.09)}
+.bus .driver{fill:#070b18}
+.bus .passenger{fill:rgba(10,15,34,.8)}
+.bus .mirror{fill:#22304f}
+.bus .exhaust{fill:#0a0d18}
+.bus .spoke{fill:none;stroke:#22304f;stroke-width:2;stroke-dasharray:3 5;transform-box:fill-box;transform-origin:center;transform:rotate(var(--spin,0deg))}
+.bus .puff{fill:rgba(170,185,220,.22);animation:puff 1.8s ease-out infinite}
+.bus .puff.p2{animation-delay:.9s}
+@keyframes puff{0%{transform:translate(0,0);opacity:.35}100%{transform:translate(-14px,-10px);opacity:0}}
+
+/* ── rain ── */
+.storm{position:fixed;inset:0;z-index:12;pointer-events:none;overflow:hidden}
+.drop{
+  position:absolute;top:-10%;width:1.5px;height:64px;
+  background:linear-gradient(transparent,rgba(180,205,255,.30));
+  transform:rotate(11deg);
+  animation:drop var(--d,.7s) linear infinite;
+  animation-delay:var(--delay,0s);
+}
+@keyframes drop{to{transform:rotate(11deg) translateY(140vh)}}
+
+/* ── sky extras ── */
+.shoot{
+  position:absolute;top:8%;left:-8%;width:120px;height:2px;
+  background:linear-gradient(90deg,transparent,#dfe8ff);
+  transform:rotate(-24deg);opacity:0;
+  animation:shoot 11s linear infinite;animation-delay:4s;
+}
+@keyframes shoot{0%,88%{opacity:0;transform:rotate(-24deg) translateX(0)}89%{opacity:.9}100%{opacity:0;transform:rotate(-24deg) translateX(150vw)}}
+.plane{
+  position:absolute;top:16%;left:-2%;width:3px;height:3px;border-radius:50%;
+  background:rgba(255,120,120,.9);box-shadow:0 0 4px rgba(255,120,120,.8);
+  animation:plane 38s linear infinite;
+}
+@keyframes plane{to{transform:translateX(115vw)}}
+
+/* ── proximity glow on signposts ── */
+.poi .glow{
+  opacity:calc(.4 + .6 * var(--near,0));
+  transform:scale(calc(.85 + .35 * var(--near,0)));
+}
+.poi .board{
+  box-shadow:0 0 calc(12px * var(--near,0)) rgba(79,216,255,.4);
+}
+
+/* ── HUD destination chip ── */
+.flexfill{flex:1}
+.next{
+  color:var(--amber);font-size:.68rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  padding:5px 12px;background:rgba(10,15,34,.7);border:1px solid rgba(255,184,77,.25);
+  clip-path:polygon(0 0,calc(100% - 7px) 0,100% 7px,100% 100%,7px 100%,0 calc(100% - 7px));
+  white-space:nowrap;
+}
+.stops a.here{background:var(--cyan);box-shadow:0 0 8px rgba(79,216,255,.9)}
+.panel .stopno{float:right;color:var(--faint);letter-spacing:.1em}
+
+/* ── boot veil ── */
+.boot{
+  position:fixed;inset:0;z-index:40;background:#05070f;
+  display:grid;place-content:center;justify-items:center;gap:10px;
+  animation:boot .9s ease .55s forwards;pointer-events:none;
+}
+.boot b{color:var(--cyan);font-size:1.1rem;font-weight:700;letter-spacing:.5em;text-shadow:0 0 18px rgba(79,216,255,.7)}
+.boot span{color:var(--faint);font-size:.62rem;letter-spacing:.28em;text-transform:uppercase}
+@keyframes boot{to{opacity:0;visibility:hidden}}
+
+@media (max-width:900px){.next{display:none}}
