@@ -26,7 +26,7 @@ Static single-page site on GitHub Pages (echo2045.github.io), built with Vite + 
 
 - Vite + React single-page app; no backend, no router, no CMS.
 - No real imagery on hand — project cards must not fabricate screenshots; art-directed CSS/SVG is acceptable, invented screenshots are not.
-- Outbound links: GitHub (github.com/echo2045), LinkedIn (linkedin.com/in/nafis-forkan-b24922184), Play Store pages for Bus Simulator Bangladesh (com.GhostInteractive.BusSimulatorBangladesh) and Endless Dhaka (com.GhostInteractive.EndlessDhaka / iOS id1598554070).
+- Outbound links: GitHub (github.com/echo2045), LinkedIn (linkedin.com/in/nafis-forkan-b24922184), Play Store pages for Bus Simulator Bangladesh (com.GhostInteractive.BusSimulatorBangladesh) and Endless Dhaka (com.GhostInteractive.EndlessDhaka / iOS id1598554070), IEEE Xplore for Stinger (ieeexplore.ieee.org/document/11313522), plus his own repos as side quests (Speak-and-Play, Retsnom.Inc, BCGameJam2020-Polar-Bear-Run, Task1---Multiplayer-Race under github.com/echo2045).
 - **Open decision:** contact email — none confirmed; a single `LINKS` constant in `src/main.jsx` holds it for him to fill in.
 - **Open decision:** Truck Simulator Bangladesh store URL — unconfirmed; link stays off until he supplies it.
 
