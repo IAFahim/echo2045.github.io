@@ -101,7 +101,7 @@ function World() {
         <path d="M60 432 30 620h120z" className="cone" />
         <path d="M340 432 250 620h120z" className="cone" />
         <circle cx="60" cy="428" r="7" className="flood" /><circle cx="340" cy="428" r="7" className="flood" />
-        <path d="M60 430l26 10-26 10z" className="flag" /><path d="M340 430l-26 10 26 10z" className="flag" />
+        <path d="M60 430l26 10-26 10z" className="flag" style={{ transformOrigin: "60px 430px" }} /><path d="M340 430l-26 10 26 10z" className="flag" style={{ transformOrigin: "340px 430px", animationDelay: ".4s" }} />
         {/* the host's podium, caught in a center-mast spotlight — he walks on when you arrive */}
         <path d="M170 505V432" className="mast" /><circle cx="170" cy="430" r="6" className="flood" />
         <path d="M170 434 138 620h64z" className="cone hostspot" />
@@ -133,9 +133,9 @@ function World() {
         <rect x="5" y="465" width="140" height="40" className="signboard" />
         <text x="75" y="491" className="neon amber" textAnchor="middle" fontSize="12" letterSpacing="1">IN DEVELOPMENT</text>
         <path d="M-40 620V300 M-60 620h40 M-40 300h30" className="cranebody" />
-        <path d="M-40 300 240 252 M-40 300 -80 380 M240 252 240 302" className="cable" />
+        <path d="M-40 300 240 252 M-40 300 -80 380" className="cable" />
         <circle cx="-40" cy="296" r="6" className="beacon" />
-        <rect x="230" y="302" width="20" height="20" className="blk" />
+        <g className="hook"><path d="M240 252v50" className="cable" /><rect x="230" y="302" width="20" height="20" className="blk" /></g>
         {/* hazard barrier */}
         {[0, 1, 2, 3, 4, 5].map((i) => <rect key={i} x={-30 + i * 46} y="600" width="34" height="14" className={i % 2 ? "hazard alt" : "hazard"} />)}
       </g>
@@ -159,13 +159,30 @@ function World() {
 
       <Rickshaw x={1120} /><Rickshaw x={3100} /><Rickshaw x={4400} />
 
-      {/* street lights */}
+      {/* street lights — each with its own orbiting moths */}
       {[420, 980, 1700, 2460, 3050, 3560, 3980, 4520].map((x) => (
         <g key={x} transform={`translate(${x},0)`} className="lamp">
           <path d="M0 620V470" className="pole" />
           <path d="M0 470h34" className="pole" />
           <path d="M28 476 12 620h50L38 476z" className="conel" />
           <circle cx="33" cy="478" r="4" className="bulb" />
+          <g className="moth" style={{ transformOrigin: "33px 478px", animationDuration: (2.6 + (x % 3) * 0.7) + "s" }}><circle cx="41" cy="470" r="1.7" /></g>
+          <g className="moth" style={{ transformOrigin: "33px 478px", animationDuration: (3.9 + (x % 4) * 0.5) + "s", animationDirection: "reverse" }}><circle cx="25" cy="486" r="1.2" /></g>
+        </g>
+      ))}
+
+      {/* a working traffic signal */}
+      <g transform="translate(1860,0)">
+        <path d="M0 620V470h-34" className="pole" />
+        <rect x="-56" y="456" width="46" height="24" rx="4" className="tlbox" />
+        <circle cx="-48" cy="468" r="5" className="tlr" /><circle cx="-33" cy="468" r="5" className="tla" /><circle cx="-18" cy="468" r="5" className="tlg" />
+      </g>
+
+      {/* steam rising from street vents */}
+      {[1500, 3450].map((x) => (
+        <g key={x} transform={`translate(${x},616)`} className="vent">
+          <rect x="-15" y="0" width="30" height="5" rx="2" />
+          <ellipse cx="0" cy="-4" rx="5" ry="3" className="wisp" /><ellipse cx="0" cy="-4" rx="5" ry="3" className="wisp w2" /><ellipse cx="0" cy="-4" rx="5" ry="3" className="wisp w3" />
         </g>
       ))}
 
@@ -176,6 +193,13 @@ function World() {
       <rect x="0" y="620" width="4800" height="26" className="sheen" />
       {[...Array(60)].map((_, i) => <rect key={i} x={i * 85} y="668" width="44" height="5" className="dash" />)}
       {[...Array(120)].map((_, i) => <rect key={i} x={i * 42 + 20} y="640" width="5" height="4" className="cat" />)}
+
+      {/* rain rings ticking in the puddles */}
+      {[1150, 2900, 4350].map((x, i) => (
+        <g key={x} transform={`translate(${x},706) scale(1,.28)`}>
+          <circle r="13" className="rip" style={{ animationDelay: (i * 0.9) + "s" }} />
+        </g>
+      ))}
 
       {/* neon reflections bleeding onto the wet asphalt */}
       <rect x="100" y="622" width="220" height="60" fill="#4fd8ff" opacity=".08" filter="url(#soft)" />
@@ -191,6 +215,7 @@ function World() {
             <circle r="13" className="pkbg" />
             <path d="M0-9 2.6-2.7 9.2-2.8 4.1 1.7 5.7 8.6 0 4.4 -5.7 8.6 -4.1 1.7 -9.2-2.8 -2.6-2.7z" />
           </g>
+          <circle r="10" className="pring" />
         </g>
       ))}
 
@@ -226,7 +251,7 @@ function Bus() {
       <rect x="6" y="10" width="200" height="20" rx="10" className="band" />
       <rect x="12" y="16" width="26" height="8" rx="2" className="dest" />
       <text x="25" y="23" className="desttxt" textAnchor="middle">NAFIS</text>
-      {[0, 1, 2, 3].map((i) => <rect key={i} x={46 + i * 34} y="16" width="26" height="16" rx="3" className="winlit" />)}
+      {[0, 1, 2, 3].map((i) => <rect key={i} x={46 + i * 34} y="16" width="26" height="16" rx="3" className={"winlit" + (i === 2 ? " flick" : "")} />)}
       {[0, 2].map((i) => <path key={i} d={`M${58 + i * 34} 32a6 6 0 016-6 6 6 0 016 6`} className="passenger" />)}
       <rect x="176" y="16" width="24" height="16" rx="3" className="winlit cab" />
       <circle cx="188" cy="26" r="4" className="driver" />
@@ -272,7 +297,7 @@ function Stop({ s, i, n }) {
   const edge = s.x < 700 ? "l" : s.x > 4300 ? "r" : undefined;
   const links = (s.links || []).concat(s.id === "terminus" && LINKS.email ? [["Email", "mailto:" + LINKS.email]] : []);
   return (
-    <div className="poi" id={"stop-" + s.id} data-edge={edge} style={{ left: (s.x / 4800 * 100) + "%" }}>
+    <div className="poi" id={"stop-" + s.id} data-edge={edge} style={{ left: (s.x / 4800 * 100) + "%", "--swd": (i * 0.37) + "s" }}>
       <button className="marker" aria-haspopup="true">
         <span className="board">{s.label}</span>
         <i className="pole" /><i className="glow" />
@@ -281,7 +306,7 @@ function Stop({ s, i, n }) {
         <p className="ptag">{s.tag} <span className="stopno">{String(i + 1).padStart(2, "0")} / {String(n).padStart(2, "0")}</span></p>
         <h3>{s.title}</h3>
         {s.lines.map((l) => <p key={l}>{l}</p>)}
-        <div className="skills">{s.skills.map((sk) => <i key={sk}>{sk}</i>)}</div>
+        <div className="skills">{s.skills.map((sk, j) => <i key={sk} style={{ "--i": j }}>{sk}</i>)}</div>
         <p className="learn">▸ learned: {s.learned}</p>
         {links.map(([t, u]) => <a key={t} className="btn" href={u} target="_blank" rel="noreferrer">{t} ↗</a>)}
       </div>
@@ -365,6 +390,8 @@ function App() {
         <i className="ztint" />
         <div className="moon" />
         {[...Array(46)].map((_, i) => <i key={i} className="star" style={{ left: (i * 97 % 100) + "%", top: (i * 53 % 55) + "%", animationDelay: (i % 7) + "s" }} />)}
+        <i className="cloud c1" /><i className="cloud c2" /><i className="cloud c3" />
+        <i className="birds" />
         <i className="shoot" /><i className="plane" />
       </div>
 
@@ -383,9 +410,9 @@ function App() {
 
       <header className="hud">
         <span className="plate-lg">NIGHT LINE · echo2045</span>
-        <span className="next">NEXT ▸ {next}</span>
+        <span className="next">NEXT <i className="go">▸</i> {next}</span>
         <span className="mode">MODE ▸ {mode}</span>
-        <span className="score" aria-label={got + " of " + PKX.length + " stars collected"}>★ {got}/{PKX.length}</span>
+        <span key={got} className="score" aria-label={got + " of " + PKX.length + " stars collected"}>★ {got}/{PKX.length}</span>
         <span className="flexfill" />
         <nav>
           {STOPS.slice(1, 8).map((s) => <a key={s.id} href={"#stop-" + s.id}>{s.label}</a>)}

@@ -400,3 +400,94 @@ body[data-zone="terminus"] .p-wave{opacity:1}
 .endwall{fill:#070b16}
 .endedge{fill:#1a2642}
 .endtxt{fill:var(--amber);font-size:13px;font-weight:800;letter-spacing:.22em;font-family:"Chakra Petch";opacity:.85}
+
+/* ── liveliness pass: ambient micro-animation ── */
+
+/* neon signs buzz — a quick double-blink every so often, offset per color */
+.neon{animation:neonflick 8s linear infinite}
+.neon.amber{animation-delay:2.7s}
+.neon.green{animation-delay:5.1s}
+.neon.pink{animation-delay:1.3s}
+@keyframes neonflick{0%,91.9%,94.5%,100%{opacity:1}92%,94%{opacity:.35}}
+
+/* a few building windows wink on and off */
+.w.lit{animation:winwink 11s linear infinite}
+.w.lit:nth-of-type(odd){animation-delay:4.2s}
+@keyframes winwink{0%,86%,90%,100%{opacity:1}88%{opacity:.3}}
+
+/* slow clouds drifting under the stars */
+.cloud{
+  position:absolute;width:340px;height:90px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(ellipse at center,rgba(9,13,28,.92),transparent 70%);
+  filter:blur(5px);animation:drift linear infinite;
+}
+.cloud.c1{top:9%;animation-duration:110s;animation-delay:-30s}
+.cloud.c2{top:17%;width:260px;height:66px;animation-duration:150s;animation-delay:-95s;opacity:.7}
+.cloud.c3{top:4%;width:430px;height:110px;animation-duration:190s;animation-delay:-140s;opacity:.55}
+@keyframes drift{from{transform:translateX(-460px)}to{transform:translateX(110vw)}}
+
+/* a skein of night birds crosses every half-minute */
+.birds{
+  position:absolute;top:15%;left:0;width:96px;height:28px;opacity:0;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 28'%3E%3Cg stroke='%23a9b5d6' stroke-width='2' fill='none' stroke-linecap='round'%3E%3Cpath d='M2 14Q10 6 18 14M19 14Q27 6 35 14'/%3E%3Cpath d='M52 9Q60 1 68 9M69 9Q77 1 85 9'/%3E%3Cpath d='M34 22Q40 16 46 22M47 22Q53 16 59 22'/%3E%3C/g%3E%3C/svg%3E") no-repeat;
+  animation:flyby 32s linear 5s infinite;
+}
+@keyframes flyby{0%{transform:translate(-140px,0);opacity:0}3%{opacity:.65}55%{transform:translate(52vw,-26px);opacity:.65}97%{opacity:.6}100%{transform:translate(112vw,-64px);opacity:0}}
+
+/* moths circling every lamp head */
+.moth{animation:mothspin linear infinite}
+.moth circle{fill:rgba(255,230,160,.85)}
+@keyframes mothspin{to{transform:rotate(360deg)}}
+
+/* working traffic light */
+.tlbox{fill:#0a0f20;stroke:rgba(140,190,255,.3);stroke-width:1.5}
+.tlr{fill:#ff5d5d}.tla{fill:#ffc14d}.tlg{fill:#3ddc84}
+.tlr,.tla,.tlg{opacity:.13}
+.tlg{animation:tlg 7s infinite}.tla{animation:tla 7s infinite}.tlr{animation:tlr 7s infinite}
+@keyframes tlg{0%,45%{opacity:1}46%,100%{opacity:.13}}
+@keyframes tla{0%,45%{opacity:.13}46%,55%{opacity:1}56%,100%{opacity:.13}}
+@keyframes tlr{0%,55%{opacity:.13}56%,92%{opacity:1}93%,100%{opacity:.13}}
+
+/* steam wisping out of the street vents */
+.vent rect{fill:#0d1430;stroke:#1a2642}
+.wisp{fill:rgba(185,205,238,.14);transform-box:fill-box;transform-origin:center;opacity:0;animation:wisp 3.6s ease-out infinite}
+.wisp.w2{animation-delay:1.2s}.wisp.w3{animation-delay:2.4s}
+@keyframes wisp{0%{transform:translateY(0) scaleX(1);opacity:0}15%{opacity:.6}100%{transform:translateY(-58px) scaleX(2.8);opacity:0}}
+
+/* rain rings ticking in puddles */
+.rip{fill:none;stroke:rgba(150,190,255,.45);stroke-width:2;transform-box:fill-box;transform-origin:center;opacity:0;animation:ripple 2.6s ease-out infinite}
+@keyframes ripple{0%{transform:scale(.25);opacity:.55}80%{opacity:.12}100%{transform:scale(2.3);opacity:0}}
+
+/* flags + the crane hook sway */
+.flag{animation:flap 1.5s ease-in-out infinite alternate}
+@keyframes flap{from{transform:skewY(-8deg)}to{transform:skewY(8deg)}}
+.hook{transform-origin:240px 252px;animation:hooksway 5.2s ease-in-out infinite alternate}
+@keyframes hooksway{from{transform:rotate(-4deg)}to{transform:rotate(4deg)}}
+
+/* signboards swing gently on their poles */
+.poi .board{transform-origin:top center;animation:boardsway 3.6s ease-in-out var(--swd,0s) infinite alternate}
+@keyframes boardsway{from{transform:rotate(-1.3deg)}to{transform:rotate(1.3deg)}}
+
+/* star collect: a shockwave ring behind the pop */
+.pring{fill:none;stroke:#ffd97a;stroke-width:2;opacity:0;transform-box:fill-box;transform-origin:center}
+.pk.got .pring{animation:pring .55s ease-out .08s forwards}
+@keyframes pring{0%{transform:scale(.4);opacity:.9}100%{transform:scale(3.4);opacity:0}}
+
+/* stars rock a little as they hover */
+@keyframes pkfloat{from{transform:translateY(0) rotate(-7deg)}to{transform:translateY(-9px) rotate(7deg)}}
+
+/* bus: headlight pool breathes, one cabin window flickers */
+.bus .lightpool{animation:lpulse 1.9s ease-in-out infinite alternate}
+@keyframes lpulse{from{opacity:.07}to{opacity:.16}}
+.bus .winlit.flick{animation:winflick 6.5s linear infinite}
+@keyframes winflick{0%,78%,82%,100%{opacity:1}79%,81%{opacity:.4}}
+
+/* HUD: score pops on collect, the ▸ nudges you onward */
+.score{display:inline-block;animation:scorebump .45s cubic-bezier(.16,1,.3,1)}
+@keyframes scorebump{0%{transform:scale(1)}40%{transform:scale(1.28)}100%{transform:scale(1)}}
+.next .go{display:inline-block;animation:nudge 1.3s ease-in-out infinite}
+@keyframes nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(3.5px)}}
+
+/* panels: skill chips cascade in when the board opens */
+.skills i{opacity:0;transform:translateY(7px);transition:opacity .35s,transform .35s;transition-delay:calc(var(--i,0)*45ms)}
+.poi:hover .skills i,.poi:focus-within .skills i{opacity:1;transform:none}
