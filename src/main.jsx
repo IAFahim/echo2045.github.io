@@ -4,8 +4,11 @@ import { LINKS, STOPS } from "./content.js";
 import "./style.css";
 
 /* who he is, by district — index into STOPS */
-const MODES = ["PROGRAMMER", "PROGRAMMER", "PROGRAMMER", "HOST", "RESEARCHER", "BUILDER", "BUILDER", "MAKER", "GUEST"];
-const ZONES = ["city", "city", "city", "arena", "lab", "build", "build", "arcade", "terminus"];
+const MODES = ["STUDENT", "PROGRAMMER", "INTERN", "PROGRAMMER", "HOST", "RESEARCHER", "BUILDER", "MAKER", "GUEST"];
+const ZONES = ["city", "city", "city", "city", "arena", "lab", "build", "arcade", "terminus"];
+
+/* collectible stars along the route — scroll over them to collect */
+const PKX = [330, 760, 1180, 1640, 2100, 2360, 2520, 2960, 3450, 3850, 4270, 4450];
 
 /* mid skyline: one long silhouette path (x 0–4800) */
 const SKY = "M0 620V430h90v190zm90-40h60v230H90zm60-90h70v320h-70zm70 30h60v290h-60zm60-70h90v360h-90zm90 20h80v340h-80zm80-60h70v400h-70zm70 40h60v360h-60zm60-90h100v450H860zm100 30h70v420h-70zm70-40h80v460h-80zm80 60h90v400h-90zm90-30h70v430h-70zm70 50h60v380h-60zm60-80h90v460h-90zm90 40h80v420h-80zm80-60h70v480h-70zm70 70h90v410h-90zm90-50h80v460h-80zm80 60h70v400h-70zm70-80h90v480h-90zm90 50h60v430h-60zm60-60h80v490h-80zm80 30h90v460h-90zm90-40h70v500h-70zm70 60h80v440h-80zm80-70h90v510h-90zm90 40h80v470h-80zm80-60h70v530h-70zm70 70h90v460h-90zm90-40h80v500h-80zm80 60h70v440h-70zm70-60h90v500h-90zm90 30h80v470h-80zm80-50h70v520h-70zm70 60h90v460h-90zm90-40h80v500h-80zm80 50h70v450h-70zm70-60h90v510h-90zm90 40h80v470h-80zm80-70h70v540h-70zm70 60h90v480h-90zm90-30h80v510h-80zm80 40h70v470h-70zm70-50h90v520h-90zm90 30h80v490h-80zm80-60h70v550h-70zm70 70h90v480h-90zm90-40h80v520h-80zm80 50h70v470h-70zm70-60h90v530h-90zm90 30h80v500h-80z";
@@ -99,13 +102,10 @@ function World() {
         <path d="M340 432 250 620h120z" className="cone" />
         <circle cx="60" cy="428" r="7" className="flood" /><circle cx="340" cy="428" r="7" className="flood" />
         <path d="M60 430l26 10-26 10z" className="flag" /><path d="M340 430l-26 10 26 10z" className="flag" />
-        {/* the host on his podium, caught in a center-mast spotlight */}
+        {/* the host's podium, caught in a center-mast spotlight — he walks on when you arrive */}
         <path d="M170 505V432" className="mast" /><circle cx="170" cy="430" r="6" className="flood" />
         <path d="M170 434 138 620h64z" className="cone hostspot" />
         <rect x="138" y="606" width="64" height="14" className="podium" />
-        <circle cx="170" cy="578" r="7" className="host" />
-        <path d="M170 586v18m0-12l-11-7m11 7l12-9" className="host" strokeLinecap="round" />
-        <circle cx="184" cy="589" r="3" className="mic" />
         <clipPath id="tickerclip"><rect x="10" y="556" width="320" height="16" /></clipPath>
         <g clipPath="url(#tickerclip)">
           <text className="ticker" y="568" x="0">
@@ -184,6 +184,16 @@ function World() {
       <rect x="2680" y="622" width="160" height="50" fill="#39d98a" opacity=".07" filter="url(#soft)" />
       <rect x="4090" y="622" width="180" height="50" fill="#ff7ad9" opacity=".08" filter="url(#soft)" />
 
+      {/* collectibles — grab every star on the way through */}
+      {PKX.map((x, i) => (
+        <g key={x} className="pk" transform={`translate(${x},556)`}>
+          <g className="pkin" style={{ animationDelay: (i * 0.27) + "s" }}>
+            <circle r="13" className="pkbg" />
+            <path d="M0-9 2.6-2.7 9.2-2.8 4.1 1.7 5.7 8.6 0 4.4 -5.7 8.6 -4.1 1.7 -9.2-2.8 -2.6-2.7z" />
+          </g>
+        </g>
+      ))}
+
       {/* buffer stop — the physical end of the line */}
       <g transform="translate(4740,0)">
         <path d="M0 620v-26h44l-30-44 M0 594h44 M14 620v-24 M30 620v-24" className="bumper" />
@@ -191,9 +201,16 @@ function World() {
         <rect x="-4" y="594" width="10" height="10" className="hazard alt" /><rect x="16" y="594" width="10" height="10" className="hazard alt" />
       </g>
 
-      {/* world ends fade into dark */}
+      {/* the world is capped — a dead-end wall, not a void */}
+      <g transform="translate(4772,0)">
+        <rect width="28" height="720" className="endwall" />
+        <rect width="5" height="720" className="endedge" />
+        <text x="18" y="650" className="endtxt" transform="rotate(-90 18 650)">END OF LINE</text>
+        <circle cx="16" cy="120" r="6" className="beacon" />
+      </g>
+
+      {/* world start fades in from dark */}
       <rect x="0" y="0" width="140" height="720" fill="url(#fadeL)" />
-      <rect x="4760" y="0" width="40" height="720" fill="url(#fadeR)" />
     </svg>
   );
 }
@@ -227,6 +244,30 @@ function Bus() {
   );
 }
 
+/* Nafis himself — walks the districts where the bus doesn't go.
+   The base figure is constant; each zone dresses him differently. */
+function Hero() {
+  return (
+    <svg className="hero" viewBox="0 0 90 96" aria-hidden="true">
+      <ellipse cx="45" cy="90" rx="24" ry="4" className="shadow" />
+      <path className="leg l1" d="M41 60l-4 26" />
+      <path className="leg l2" d="M49 60l4 26" />
+      <path className="arm" d="M36 37l-5 17" />
+      <rect className="torso" x="35" y="28" width="20" height="34" rx="9" />
+      <rect className="pack" x="27" y="34" width="8" height="17" rx="3" />
+      <circle className="head" cx="45" cy="18" r="11" />
+      <rect className="visor" x="40" y="14" width="10" height="5" rx="2" />
+      {/* zone gear */}
+      <g className="p-mic"><path className="arm" d="M54 38l12-15" /><circle cx="68" cy="21" r="4" className="micdot" /></g>
+      <g className="p-coat"><path d="M31 30h28l5 34h-38z" /><path d="M35 52h20" className="belt" /></g>
+      <g className="p-flask"><path d="M62 48h10l-4 12h-2z" /><circle cx="67" cy="56" r="2.4" className="flaskglow" /></g>
+      <g className="p-hat"><path d="M33 15a12 12 0 0124 0z" /><rect x="30" y="13" width="30" height="4" rx="2" /></g>
+      <g className="p-phones"><path d="M32 16a13 13 0 0126 0" /><rect x="29" y="13" width="6" height="10" rx="2.5" /><rect x="55" y="13" width="6" height="10" rx="2.5" /></g>
+      <g className="p-wave"><path className="arm" d="M54 38l14-18" /><circle cx="70" cy="17" r="4" className="hand" /></g>
+    </svg>
+  );
+}
+
 function Stop({ s, i, n }) {
   const edge = s.x < 700 ? "l" : s.x > 4300 ? "r" : undefined;
   const links = (s.links || []).concat(s.id === "terminus" && LINKS.email ? [["Email", "mailto:" + LINKS.email]] : []);
@@ -248,63 +289,22 @@ function Stop({ s, i, n }) {
   );
 }
 
-/* synth ambience — rain hiss + engine hum, no audio files */
-function makeAmbience() {
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
-  const master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
-  const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
-  const d = buf.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-  const noise = ctx.createBufferSource(); noise.buffer = buf; noise.loop = true;
-  const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 3800; bp.Q.value = 0.35;
-  const ng = ctx.createGain(); ng.gain.value = 0.05;
-  noise.connect(bp); bp.connect(ng); ng.connect(master); noise.start();
-  const hum = ctx.createOscillator(); hum.type = "sine"; hum.frequency.value = 52;
-  const hg = ctx.createGain(); hg.gain.value = 0.028;
-  hum.connect(hg); hg.connect(master); hum.start();
-  const hum2 = ctx.createOscillator(); hum2.type = "triangle"; hum2.frequency.value = 104;
-  const h2 = ctx.createGain(); h2.gain.value = 0.012;
-  hum2.connect(h2); h2.connect(master); hum2.start();
-  return { ctx, master };
-}
-function chime(a) { // soft two-tone arrival bell
-  const t = a.ctx.currentTime;
-  [880, 659].forEach((f, i) => {
-    const o = a.ctx.createOscillator(), g = a.ctx.createGain();
-    o.type = "sine"; o.frequency.value = f;
-    g.gain.setValueAtTime(0, t + i * 0.14);
-    g.gain.linearRampToValueAtTime(0.07, t + i * 0.14 + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.14 + 0.5);
-    o.connect(g); g.connect(a.master); o.start(t + i * 0.14); o.stop(t + i * 0.14 + 0.6);
-  });
-}
-
 function App() {
   const world = useRef(null);
   const fill = useRef(null);
   const busEl = useRef(null);
   const farEl = useRef(null);
   const fgEl = useRef(null);
-  const audio = useRef(null);
   const [next, setNext] = useState(STOPS[0].label);
   const [mode, setMode] = useState(MODES[0]);
-  const [sound, setSound] = useState(false);
-
-  const toggleSound = () => {
-    if (!audio.current) audio.current = makeAmbience();
-    const a = audio.current;
-    a.ctx.resume();
-    setSound((on) => {
-      a.master.gain.linearRampToValueAtTime(on ? 0 : 1, a.ctx.currentTime + 0.4);
-      return !on;
-    });
-  };
+  const [got, setGot] = useState(0);
 
   useEffect(() => {
     const el = world.current;
     const pois = [...el.querySelectorAll(".poi")];
+    const pks = [...el.querySelectorAll(".pk")];
     const dots = [...document.querySelectorAll(".stops a")];
-    let lastBest = -1;
+    let lastBest = -1, gotCount = 0;
     const onWheel = (e) => {
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { el.scrollLeft += e.deltaY; e.preventDefault(); }
     };
@@ -316,14 +316,26 @@ function App() {
       if (farEl.current) farEl.current.style.transform = `translateX(${s * 0.35}px)`;
       if (fgEl.current) fgEl.current.style.transform = `translateX(${-s * 1.15}px)`;
       const cx = el.clientWidth / 2;
+      /* the hero holds screen-center for most of the ride, then walks
+         ahead to the gate as the line terminates */
+      const frac = 0.5 + 0.22 * Math.pow(max ? s / max : 0, 6);
+      busEl.current.parentElement.style.left = (frac * 100).toFixed(2) + "%";
+      const heroX = s + el.clientWidth * frac;
       let best = null, bd = 1e9;
       pois.forEach((p, i) => {
         const r = p.getBoundingClientRect();
         const d = Math.abs(r.left + r.width / 2 - cx);
         p.style.setProperty("--near", Math.max(0, 1 - d / (cx * 1.1)).toFixed(2));
-        if (d < bd) { bd = d; best = i; }
+        const dh = Math.abs(STOPS[i].x * el.scrollWidth / 4800 - heroX);
+        if (dh < bd) { bd = dh; best = i; }
       });
-      if (best !== lastBest && lastBest !== -1 && audio.current) chime(audio.current);
+      let newGot = 0;
+      pks.forEach((pk, i) => {
+        if (!pk.classList.contains("got") && PKX[i] * el.scrollWidth / 4800 <= heroX + 24) {
+          pk.classList.add("got"); newGot++;
+        }
+      });
+      if (newGot) { gotCount += newGot; setGot(gotCount); }
       if (best !== lastBest) {
         document.body.dataset.zone = ZONES[best];
         setMode(MODES[best]);
@@ -334,19 +346,6 @@ function App() {
       setNext(s >= max - 4 ? "END OF LINE" : (nxt || STOPS[STOPS.length - 1]).label);
     };
 
-    /* attract mode — the bus drives itself until the visitor takes the wheel */
-    let auto = !matchMedia("(prefers-reduced-motion:reduce)").matches;
-    let raf;
-    const drive = () => {
-      if (!auto) return;
-      const max = el.scrollWidth - el.clientWidth;
-      if (el.scrollLeft < max) { el.scrollLeft += 0.55; raf = requestAnimationFrame(drive); }
-    };
-    const handover = () => { auto = false; cancelAnimationFrame(raf); };
-    if (auto && !location.hash) raf = requestAnimationFrame(drive);
-    ["wheel", "touchstart", "pointerdown"].forEach((t) => el.addEventListener(t, handover));
-    window.addEventListener("keydown", handover);
-
     el.addEventListener("wheel", onWheel, { passive: false });
     el.addEventListener("scroll", onScroll);
     onScroll();
@@ -355,8 +354,6 @@ function App() {
     else if (matchMedia("(min-width:900px)").matches)
       el.querySelector("#stop-depot .marker")?.focus();
     return () => {
-      handover();
-      window.removeEventListener("keydown", handover);
       el.removeEventListener("wheel", onWheel);
       el.removeEventListener("scroll", onScroll);
     };
@@ -373,7 +370,7 @@ function App() {
 
       <div className="world" ref={world}>
         <div className="track">
-          <div className="farwrap" ref={farEl}><FarSkyline /></div>
+          <div className="farclip"><div className="farwrap" ref={farEl}><FarSkyline /></div></div>
           <World />
           {STOPS.map((s, i) => <Stop key={s.id} s={s} i={i} n={STOPS.length} />)}
         </div>
@@ -381,14 +378,14 @@ function App() {
 
       <div className="fgwrap" ref={fgEl}><Foreground /></div>
 
-      <div className="buswrap"><div ref={busEl} className="buspin"><Bus /></div></div>
+      <div className="buswrap"><div ref={busEl} className="buspin"><Bus /><Hero /></div></div>
       <div className="storm" aria-hidden="true">{[...Array(26)].map((_, i) => <i key={i} className="drop" style={{ left: (i * 41 % 100) + "%", "--d": (0.55 + (i % 5) * 0.11) + "s", "--delay": -(i * 0.37 % 2) + "s" }} />)}</div>
 
       <header className="hud">
         <span className="plate-lg">NIGHT LINE · echo2045</span>
         <span className="next">NEXT ▸ {next}</span>
         <span className="mode">MODE ▸ {mode}</span>
-        <button className={"snd" + (sound ? " on" : "")} onClick={toggleSound} aria-pressed={sound}>{sound ? "SOUND ON" : "SOUND OFF"}</button>
+        <span className="score" aria-label={got + " of " + PKX.length + " stars collected"}>★ {got}/{PKX.length}</span>
         <span className="flexfill" />
         <nav>
           {STOPS.slice(1, 8).map((s) => <a key={s.id} href={"#stop-" + s.id}>{s.label}</a>)}

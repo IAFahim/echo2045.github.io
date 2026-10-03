@@ -8,6 +8,10 @@
 
    To remove a stop: delete its block. The nav, route dots, and
    "NEXT ▸" display update automatically.
+
+   `x` positions that line up with buildings: ~225 intro board,
+   ~590 depot, ~2080 arena, ~2760 lab, ~3675 construction,
+   ~4180 arcade, ~4620 terminus gate.
    ───────────────────────────────────────────────────────────── */
 
 export const LINKS = {
@@ -18,17 +22,23 @@ export const LINKS = {
 
 export const STOPS = [
   {
-    id: "depot", x: 590, label: "Depot", tag: "day job", title: "Ghost Interactive",
-    lines: ["Game programmer — Unity, Unreal Engine, game systems.", "Live titles, shipped and maintained at scale."],
-    skills: ["Unity", "Unreal Engine", "Game Systems"],
-    learned: "Shipping beats polishing — a live title is a promise you keep.",
+    id: "origin", x: 225, label: "Start", tag: "origin", title: "Campus Gate",
+    lines: ["Started at UBC — BASc Engineering '18–'20, Vancouver.", "Finished at North South University, Dhaka — Computer Science."],
+    skills: ["Computer Science", "Engineering", "Two Cities"],
+    learned: "Vancouver taught the craft; Dhaka gave it a deadline.",
   },
   {
-    id: "scale", x: 940, label: "10M+ Scale", tag: "main quest", title: "Live at Scale",
-    lines: ["Bus Simulator Bangladesh — updating & maintaining a title with 10M+ downloads.", "Optimization, bug fixing, Addressables, Cloud Content Delivery."],
-    skills: ["Addressables", "Cloud Content Delivery", "Optimization"],
-    learned: "Performance is a feature. At 10M installs, every frame has a budget.",
+    id: "depot", x: 590, label: "Depot", tag: "day job", title: "Ghost Interactive",
+    lines: ["Game Programmer — Unity titles live at scale.", "Bus Simulator Bangladesh carries 10M+ downloads on the store listing; keeping live games healthy is the job."],
+    skills: ["Unity", "C#", "Live Ops"],
+    learned: "Live code has ten million critics.",
     links: [["Play Store", "https://play.google.com/store/apps/details?id=com.GhostInteractive.BusSimulatorBangladesh"]],
+  },
+  {
+    id: "intern", x: 940, label: "Intern Alley", tag: "first quests", title: "The Intern Run",
+    lines: ["Vidribute — remote Game Developer Intern '23–'24 (Germany): game programming + documentation.", "Spectrum Software — Software Engineer Intern '25, Dhaka: PERN stack, on-site."],
+    skills: ["Game Programming", "PERN", "Remote Work"],
+    learned: "Every stack teaches a different honesty.",
   },
   {
     id: "dhaka", x: 1420, label: "Endless Dhaka", tag: "main quest", title: "Endless Dhaka",
@@ -39,32 +49,26 @@ export const STOPS = [
   },
   {
     id: "stadium", x: 2080, label: "Esports Arena", tag: "the other career", title: "Esports Ops",
-    lines: ["10+ online tournaments · 5+ LAN · 2 national qualifiers hosted.", "500+ players supported · 24+ competitive teams managed.", "National team taken to international events."],
-    skills: ["Tournament Ops", "Community", "Team Management"],
-    learned: "Ops is systems design where the runtime is people.",
+    lines: ["BYDESA — Co-Councillor, League of Legends Bangladesh '22–'24: online + LAN tournaments, sponsors, budgets, logistics.", "Anchored events and hosted player interviews — then trained the next anchors at NSU C&E Club."],
+    skills: ["Hosting & Anchoring", "Tournament Ops", "Sponsorships"],
+    learned: "A crowd is just a lobby with better lighting.",
   },
   {
     id: "lab", x: 2760, label: "Research Lab", tag: "research quest", title: "Stinger — IEEE",
-    lines: ["3D asymmetric multiplayer serious game teaching dengue prevention in rural Bangladesh.", "Published at SNPD 2025 — IEEE, Busan."],
+    lines: ["3D asymmetric multiplayer serious game teaching dengue prevention in rural Bangladesh — published IEEE, Dec 2025.", "Early results: real knowledge retention and behavior adoption."],
     skills: ["Serious Games", "Asymmetric Multiplayer", "Research → Publication"],
     learned: "Games can teach what lectures can't.",
     links: [["Read paper", "https://ieeexplore.ieee.org/document/11313522"]],
   },
   {
-    id: "truck", x: 3300, label: "Truck Depot", tag: "main quest", title: "Truck Simulator BD",
-    lines: ["Custom traffic system designed and programmed for realistic simulation.", "Game systems built for player experience."],
-    skills: ["Traffic AI", "Simulation Systems", "Player Experience"],
-    learned: "Believable traffic is choreography, not chaos.",
-  },
-  {
-    id: "crane", x: 3780, label: "Under Construction", tag: "soon", title: "In the Pipeline",
-    lines: ["2 upcoming games in development.", "Watch this skyline."],
-    skills: ["Prototyping", "R&D", "Systems Design"],
-    learned: "The next game is already loading.",
+    id: "crane", x: 3675, label: "Under Construction", tag: "now building", title: "UE5 Serious Game",
+    lines: ["Currently building a 3D asynchronous multiplayer serious game on Unreal Engine 5.", "At the day job: custom traffic systems for Truck Simulator Bangladesh."],
+    skills: ["Unreal Engine 5", "Async Multiplayer", "Traffic AI"],
+    learned: "Async multiplayer is correspondence chess with packets.",
   },
   {
     id: "arcade", x: 4180, label: "Jam Arcade", tag: "side quests", title: "Side Quests",
-    lines: ["Speak-and-Play — voice-controlled gaming for differently-abled players.", "Retsnom.Inc — befriend monsters · Polar Bear Run — BCGameJam 2020 · Multiplayer Race — Photon PUN."],
+    lines: ["Speak & Play — voice-controlled gaming for differently-abled players (NSU, Unity).", "Retsnom.Inc — befriend monsters · Polar Bear Run — BC Game Jam 2020 · Multiplayer Race — Photon PUN."],
     skills: ["HCI / Accessibility", "Photon PUN", "Game Jams"],
     learned: "Weekend builds keep the instinct sharp.",
     links: [["Browse repos", "https://github.com/echo2045?tab=repositories"]],

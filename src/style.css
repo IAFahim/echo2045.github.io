@@ -88,6 +88,7 @@ a{color:var(--cyan)}
 .buswrap{
   position:fixed;z-index:9;left:50%;bottom:11.5%;
   transform:translateX(-50%);pointer-events:none;
+  transition:left .9s cubic-bezier(.3,.7,.3,1);
 }
 .buspin{width:clamp(170px,26vw,270px);animation:bob 1.7s ease-in-out infinite}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(1.6px)}}
@@ -287,16 +288,6 @@ a{color:var(--cyan)}
 
 @media (max-width:900px){.next{display:none}}
 
-/* ── sound toggle ── */
-.snd{
-  padding:5px 12px;background:rgba(10,15,34,.7);border:1px solid var(--line);
-  color:var(--faint);font-size:.62rem;font-weight:700;letter-spacing:.18em;
-  clip-path:polygon(0 0,calc(100% - 7px) 0,100% 7px,100% 100%,7px 100%,0 calc(100% - 7px));
-  transition:color .2s,border-color .2s;white-space:nowrap;
-}
-.snd.on{color:var(--green);border-color:rgba(57,217,138,.5)}
-.snd:hover{color:var(--cyan)}
-
 /* ── panel: skills + takeaway ── */
 .skills{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
 .skills i{
@@ -344,3 +335,68 @@ circle.host{fill:#dfe8ff;stroke:none}
 .sun{fill:#ff9c5b;filter:drop-shadow(0 0 30px rgba(255,140,70,.8))}
 
 @media (max-width:1100px){.mode{display:none}}
+
+/* ── far-skyline clipper: parallax overflow must not widen the scroll ── */
+.farclip{position:absolute;inset:0;overflow:hidden;z-index:0}
+
+/* ── the hero: Nafis walks the districts the bus doesn't serve ── */
+.buspin{position:relative}
+.hero{
+  position:absolute;left:50%;bottom:-4%;width:36%;pointer-events:none;
+  transform:translate(-50%,20px);opacity:0;
+  transition:opacity .45s,transform .45s;
+  filter:drop-shadow(0 8px 12px rgba(0,0,0,.55));
+}
+body[data-zone]:not([data-zone="city"]) .hero{opacity:1;transform:translate(-50%,0)}
+body[data-zone]:not([data-zone="city"]) .bus{opacity:0;transform:translateY(26px) scale(.94)}
+.bus{transition:opacity .45s,transform .45s}
+.hero .leg,.hero .arm{stroke:#dfe8ff;stroke-width:6;stroke-linecap:round;fill:none}
+.hero .leg{transform-box:fill-box;transform-origin:top;animation:step .45s ease-in-out infinite alternate}
+.hero .leg.l2{animation-direction:alternate-reverse}
+@keyframes step{from{transform:rotate(16deg)}to{transform:rotate(-16deg)}}
+.hero .torso,.hero .head{fill:#dfe8ff}
+.hero .pack{fill:#22304f}
+.hero .visor{fill:#0b1226}
+.hero .shadow{fill:rgba(0,0,0,.5)}
+.hero [class^="p-"],.hero [class*=" p-"]{opacity:0;transition:opacity .4s}
+body[data-zone="arena"] .p-mic,
+body[data-zone="lab"] .p-coat,body[data-zone="lab"] .p-flask,
+body[data-zone="build"] .p-hat,
+body[data-zone="arcade"] .p-phones,
+body[data-zone="terminus"] .p-wave{opacity:1}
+.hero .micdot{fill:#ff5d5d}
+.hero .p-coat path{fill:rgba(238,244,255,.92)}
+.hero .p-coat .belt{fill:none;stroke:#9fb0d8;stroke-width:2}
+.hero .p-flask path{fill:rgba(120,240,180,.35);stroke:#39d98a;stroke-width:1.5}
+.hero .flaskglow{fill:#39d98a}
+.hero .p-hat path,.hero .p-hat rect{fill:var(--amber)}
+.hero .p-phones path{stroke:var(--pink);stroke-width:3;fill:none;stroke-linecap:round}
+.hero .p-phones rect{fill:var(--pink)}
+.hero .p-wave{transform-box:fill-box;transform-origin:15% 85%;animation:wave .7s ease-in-out infinite alternate}
+@keyframes wave{from{transform:rotate(-14deg)}to{transform:rotate(14deg)}}
+.hero .hand{fill:#dfe8ff}
+@media (prefers-reduced-motion:reduce){.hero .leg,.hero .p-wave{animation:none}}
+
+/* ── collectible stars ── */
+.pk{fill:#ffd97a}
+.pk .pkbg{fill:rgba(255,200,80,.14)}
+.pk .pkin{
+  transform-box:fill-box;transform-origin:center;
+  animation:pkfloat 2.4s ease-in-out infinite alternate;
+  filter:drop-shadow(0 0 7px rgba(255,200,80,.85));
+}
+@keyframes pkfloat{from{transform:translateY(0)}to{transform:translateY(-9px)}}
+.pk.got .pkin{animation:pkpop .5s ease forwards}
+@keyframes pkpop{35%{transform:scale(1.6)}100%{transform:scale(0);opacity:0}}
+.score{
+  color:var(--amber);font-size:.68rem;font-weight:700;letter-spacing:.14em;
+  padding:5px 12px;background:rgba(10,15,34,.7);border:1px solid rgba(255,184,77,.35);
+  clip-path:polygon(0 0,calc(100% - 7px) 0,100% 7px,100% 100%,7px 100%,0 calc(100% - 7px));
+  white-space:nowrap;font-variant-numeric:tabular-nums;
+}
+@media (prefers-reduced-motion:reduce){.pk .pkin{animation:none}}
+
+/* ── the capped end of the world ── */
+.endwall{fill:#070b16}
+.endedge{fill:#1a2642}
+.endtxt{fill:var(--amber);font-size:13px;font-weight:800;letter-spacing:.22em;font-family:"Chakra Petch";opacity:.85}
