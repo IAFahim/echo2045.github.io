@@ -306,3 +306,41 @@ a{color:var(--cyan)}
 }
 .learn{color:var(--cyan)!important;font-size:.8rem!important;font-style:italic;opacity:.9}
 .bumper{stroke:#16233f;stroke-width:7;fill:none}
+
+/* ── zone atmosphere: the sky's temperament changes by district ── */
+@property --zt{syntax:"<color>";inherits:true;initial-value:rgba(0,0,0,0)}
+.ztint{
+  position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(120% 90% at 50% 115%, var(--zt), transparent 62%),
+    linear-gradient(var(--zt), transparent 75%);
+  transition:--zt 1.4s ease;
+}
+body[data-zone="arena"]{--zt:rgba(255,166,60,.18)}
+body[data-zone="lab"]{--zt:rgba(70,220,150,.14)}
+body[data-zone="build"]{--zt:rgba(150,120,255,.15)}
+body[data-zone="arcade"]{--zt:rgba(255,122,217,.14)}
+body[data-zone="terminus"]{--zt:rgba(255,150,80,.20)}
+
+/* ── mode chip + host + dawn ── */
+:root{--zc:var(--green)}
+body[data-zone="city"]{--zc:var(--cyan)}
+body[data-zone="arena"]{--zc:var(--amber)}
+body[data-zone="lab"]{--zc:var(--green)}
+body[data-zone="build"]{--zc:#b48cff}
+body[data-zone="arcade"]{--zc:var(--pink)}
+body[data-zone="terminus"]{--zc:#ff9c5b}
+.mode{
+  color:var(--zc);font-size:.68rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  padding:5px 12px;background:rgba(10,15,34,.7);border:1px solid currentColor;
+  clip-path:polygon(0 0,calc(100% - 7px) 0,100% 7px,100% 100%,7px 100%,0 calc(100% - 7px));
+  white-space:nowrap;opacity:.9;transition:color .5s;
+}
+.podium{fill:#0a0f22;stroke:rgba(140,190,255,.35);stroke-width:2}
+.host{fill:#dfe8ff;stroke:#dfe8ff;stroke-width:4;fill:none;stroke-linecap:round}
+circle.host{fill:#dfe8ff;stroke:none}
+.mic{fill:#ff5d5d}
+.hostspot{fill:rgba(255,225,160,.09)}
+.sun{fill:#ff9c5b;filter:drop-shadow(0 0 30px rgba(255,140,70,.8))}
+
+@media (max-width:1100px){.mode{display:none}}

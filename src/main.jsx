@@ -3,6 +3,10 @@ import { createRoot } from "react-dom/client";
 import { LINKS, STOPS } from "./content.js";
 import "./style.css";
 
+/* who he is, by district — index into STOPS */
+const MODES = ["PROGRAMMER", "PROGRAMMER", "PROGRAMMER", "HOST", "RESEARCHER", "BUILDER", "BUILDER", "MAKER", "GUEST"];
+const ZONES = ["city", "city", "city", "arena", "lab", "build", "build", "arcade", "terminus"];
+
 /* mid skyline: one long silhouette path (x 0–4800) */
 const SKY = "M0 620V430h90v190zm90-40h60v230H90zm60-90h70v320h-70zm70 30h60v290h-60zm60-70h90v360h-90zm90 20h80v340h-80zm80-60h70v400h-70zm70 40h60v360h-60zm60-90h100v450H860zm100 30h70v420h-70zm70-40h80v460h-80zm80 60h90v400h-90zm90-30h70v430h-70zm70 50h60v380h-60zm60-80h90v460h-90zm90 40h80v420h-80zm80-60h70v480h-70zm70 70h90v410h-90zm90-50h80v460h-80zm80 60h70v400h-70zm70-80h90v480h-90zm90 50h60v430h-60zm60-60h80v490h-80zm80 30h90v460h-90zm90-40h70v500h-70zm70 60h80v440h-80zm80-70h90v510h-90zm90 40h80v470h-80zm80-60h70v530h-70zm70 70h90v460h-90zm90-40h80v500h-80zm80 60h70v440h-70zm70-60h90v500h-90zm90 30h80v470h-80zm80-50h70v520h-70zm70 60h90v460h-90zm90-40h80v500h-80zm80 50h70v450h-70zm70-60h90v510h-90zm90 40h80v470h-80zm80-70h70v540h-70zm70 60h90v480h-90zm90-30h80v510h-80zm80 40h70v470h-70zm70-50h90v520h-90zm90 30h80v490h-80zm80-60h70v550h-70zm70 70h90v480h-90zm90-40h80v520h-80zm80 50h70v470h-70zm70-60h90v530h-90zm90 30h80v500h-80z";
 
@@ -31,10 +35,6 @@ function Foreground() {
         <path key={i} d={`M${x} 352 Q${x + 450} 430 ${xs[i + 1]} 352`} className="cable" />
       ))}
       <path d="M-30 360 Q350 440 700 352" className="cable" />
-      <path d="M2380 720V560q0-30 40-30t40 30v160z" className="fgpost tree" />
-      <circle cx="2420" cy="505" r="60" className="fgpost" />
-      <circle cx="2370" cy="540" r="42" className="fgpost" />
-      <circle cx="2470" cy="540" r="42" className="fgpost" />
     </svg>
   );
 }
@@ -59,7 +59,12 @@ function World() {
         <linearGradient id="fadeL" x1="0" x2="1"><stop offset="0" stopColor="#05070f" stopOpacity=".8" /><stop offset="1" stopColor="#05070f" stopOpacity="0" /></linearGradient>
         <linearGradient id="fadeR" x1="0" x2="1"><stop offset="0" stopColor="#05070f" stopOpacity="0" /><stop offset="1" stopColor="#05070f" stopOpacity=".8" /></linearGradient>
         <linearGradient id="fog" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#96a8d0" stopOpacity="0" /><stop offset=".6" stopColor="#96a8d0" stopOpacity=".05" /><stop offset="1" stopColor="#96a8d0" stopOpacity="0" /></linearGradient>
+        <radialGradient id="dawn" cx=".5" cy="1"><stop offset="0" stopColor="#ff9c5b" stopOpacity=".55" /><stop offset=".5" stopColor="#c96a4a" stopOpacity=".22" /><stop offset="1" stopColor="#c96a4a" stopOpacity="0" /></radialGradient>
       </defs>
+
+      {/* dawn rising behind the skyline at the end of the line */}
+      <ellipse cx="4700" cy="660" rx="760" ry="420" fill="url(#dawn)" />
+      <circle cx="4700" cy="645" r="85" className="sun" />
 
       <path className="skyline" d={SKY} />
       <g className="citylights">{[...Array(140)].map((_, i) => {
@@ -85,7 +90,7 @@ function World() {
         <rect x="34" y="585" width="152" height="35" className="door" />
       </g>
 
-      {/* esports arena */}
+      {/* esports arena — here he's the host */}
       <g className="b" transform="translate(1960,0)">
         <ellipse cx="170" cy="560" rx="180" ry="58" className="blk" />
         <rect x="-10" y="540" width="360" height="80" className="blk" />
@@ -94,6 +99,13 @@ function World() {
         <path d="M340 432 250 620h120z" className="cone" />
         <circle cx="60" cy="428" r="7" className="flood" /><circle cx="340" cy="428" r="7" className="flood" />
         <path d="M60 430l26 10-26 10z" className="flag" /><path d="M340 430l-26 10 26 10z" className="flag" />
+        {/* the host on his podium, caught in a center-mast spotlight */}
+        <path d="M170 505V432" className="mast" /><circle cx="170" cy="430" r="6" className="flood" />
+        <path d="M170 434 138 620h64z" className="cone hostspot" />
+        <rect x="138" y="606" width="64" height="14" className="podium" />
+        <circle cx="170" cy="578" r="7" className="host" />
+        <path d="M170 586v18m0-12l-11-7m11 7l12-9" className="host" strokeLinecap="round" />
+        <circle cx="184" cy="589" r="3" className="mic" />
         <clipPath id="tickerclip"><rect x="10" y="556" width="320" height="16" /></clipPath>
         <g clipPath="url(#tickerclip)">
           <text className="ticker" y="568" x="0">
@@ -181,7 +193,7 @@ function World() {
 
       {/* world ends fade into dark */}
       <rect x="0" y="0" width="140" height="720" fill="url(#fadeL)" />
-      <rect x="4660" y="0" width="140" height="720" fill="url(#fadeR)" />
+      <rect x="4760" y="0" width="40" height="720" fill="url(#fadeR)" />
     </svg>
   );
 }
@@ -275,6 +287,7 @@ function App() {
   const fgEl = useRef(null);
   const audio = useRef(null);
   const [next, setNext] = useState(STOPS[0].label);
+  const [mode, setMode] = useState(MODES[0]);
   const [sound, setSound] = useState(false);
 
   const toggleSound = () => {
@@ -311,6 +324,10 @@ function App() {
         if (d < bd) { bd = d; best = i; }
       });
       if (best !== lastBest && lastBest !== -1 && audio.current) chime(audio.current);
+      if (best !== lastBest) {
+        document.body.dataset.zone = ZONES[best];
+        setMode(MODES[best]);
+      }
       lastBest = best;
       dots.forEach((d, i) => d.classList.toggle("here", i === best));
       const nxt = STOPS.find((st) => st.x / 4800 * el.scrollWidth > s + el.clientWidth * 0.62);
@@ -348,6 +365,7 @@ function App() {
   return (
     <>
       <div className="sky">
+        <i className="ztint" />
         <div className="moon" />
         {[...Array(46)].map((_, i) => <i key={i} className="star" style={{ left: (i * 97 % 100) + "%", top: (i * 53 % 55) + "%", animationDelay: (i % 7) + "s" }} />)}
         <i className="shoot" /><i className="plane" />
@@ -369,6 +387,7 @@ function App() {
       <header className="hud">
         <span className="plate-lg">NIGHT LINE · echo2045</span>
         <span className="next">NEXT ▸ {next}</span>
+        <span className="mode">MODE ▸ {mode}</span>
         <button className={"snd" + (sound ? " on" : "")} onClick={toggleSound} aria-pressed={sound}>{sound ? "SOUND ON" : "SOUND OFF"}</button>
         <span className="flexfill" />
         <nav>
