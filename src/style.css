@@ -49,7 +49,7 @@ a{color:var(--cyan)}
 .world{
   position:fixed;inset:0;z-index:1;
   overflow-x:auto;overflow-y:hidden;
-  scrollbar-width:none;scroll-behavior:smooth;
+  scrollbar-width:none;
   overscroll-behavior-x:contain;
 }
 .world::-webkit-scrollbar{display:none}
@@ -85,13 +85,6 @@ a{color:var(--cyan)}
 .dash{fill:rgba(255,200,90,.5)}
 
 /* ── the bus ── */
-.buswrap{
-  position:fixed;z-index:9;left:50%;bottom:11.5%;
-  transform:translateX(-50%);pointer-events:none;
-  transition:left .9s cubic-bezier(.3,.7,.3,1);
-}
-.buspin{width:clamp(170px,26vw,270px);animation:bob 1.7s ease-in-out infinite}
-@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(1.6px)}}
 .bus{display:block;width:100%;filter:drop-shadow(0 10px 18px rgba(0,0,0,.6))}
 .bus .body{fill:#101a35;stroke:rgba(140,190,255,.4);stroke-width:1.5}
 .bus .band{fill:#0b1226}
@@ -180,7 +173,6 @@ a{color:var(--cyan)}
 
 @media (max-width:700px){
   .hud nav{display:none}
-  .buswrap{bottom:9.5%}
   .panel{bottom:88px}
 }
 
@@ -339,20 +331,43 @@ circle.host{fill:#dfe8ff;stroke:none}
 /* ── far-skyline clipper: parallax overflow must not widen the scroll ── */
 .farclip{position:absolute;inset:0;overflow:hidden;z-index:0}
 
-/* ── the hero: Nafis walks the districts the bus doesn't serve ── */
-.buspin{position:relative}
-.hero{
-  position:absolute;left:50%;bottom:-4%;width:36%;pointer-events:none;
-  transform:translate(-50%,20px);opacity:0;
-  transition:opacity .45s,transform .45s;
+/* ── the hero: a free runner living in world coordinates ── */
+.heropin{
+  position:absolute;bottom:15%;left:0;width:1.75%;z-index:6;pointer-events:none;
   filter:drop-shadow(0 8px 12px rgba(0,0,0,.55));
 }
-body[data-zone]:not([data-zone="city"]) .hero{opacity:1;transform:translate(-50%,0)}
-body[data-zone]:not([data-zone="city"]) .bus{opacity:0;transform:translateY(26px) scale(.94)}
-.bus{transition:opacity .45s,transform .45s}
+.heropin .hero{display:block;width:100%}
+.heropin.air .leg{animation:none;transform:rotate(22deg)}
+.heropin.air .leg.l2{transform:rotate(-6deg)}
+
+/* the night bus loops the route on its own — its roof is a platform */
+.traffic{position:absolute;bottom:15%;left:0;width:3.3%;z-index:5;pointer-events:none;animation:bob 1.7s ease-in-out infinite}
+@keyframes bob{0%,100%{margin-top:0}50%{margin-top:-4px}}
+.traffic .bus{display:block;width:100%;filter:drop-shadow(0 8px 14px rgba(0,0,0,.55))}
+.fx{position:absolute;inset:0;z-index:7;pointer-events:none}
+
+/* bolts */
+.bolt{
+  position:absolute;width:12px;height:4px;margin:-2px 0 0 -6px;border-radius:2px;
+  background:#ffe9a8;box-shadow:0 0 9px rgba(255,220,130,.95);
+}
+
+/* crates + shards */
+.crate .crbox{fill:#7a4e22;stroke:#4a2f10;stroke-width:2}
+.crate .crcross{stroke:#4a2f10;stroke-width:2;fill:none;opacity:.7}
+.crate .crstar{fill:#ffd97a;opacity:0;transform-box:fill-box;transform-origin:center}
+.crate.broken .crbox,.crate.broken .crcross{opacity:0;transition:opacity .15s}
+.crate.broken .crstar{animation:crstar .9s ease-out forwards}
+@keyframes crstar{0%{opacity:1;transform:scale(.3) translateY(0)}35%{opacity:1;transform:scale(1.5) translateY(-16px)}70%{opacity:1;transform:scale(1) translateY(-26px)}100%{opacity:0;transform:scale(.6) translateY(-34px)}}
+.shard{
+  position:absolute;width:7px;height:7px;background:#8a5a2b;border-radius:1px;
+  animation:shardfly .75s ease-out forwards;
+}
+@keyframes shardfly{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) rotate(340deg);opacity:0}}
 .hero .leg,.hero .arm{stroke:#dfe8ff;stroke-width:6;stroke-linecap:round;fill:none}
-.hero .leg{transform-box:fill-box;transform-origin:top;animation:step .45s ease-in-out infinite alternate}
-.hero .leg.l2{animation-direction:alternate-reverse}
+.hero .leg{transform-box:fill-box;transform-origin:top}
+.heropin.run .leg{animation:step .45s ease-in-out infinite alternate}
+.heropin.run .leg.l2{animation-direction:alternate-reverse}
 @keyframes step{from{transform:rotate(16deg)}to{transform:rotate(-16deg)}}
 .hero .torso,.hero .head{fill:#dfe8ff}
 .hero .pack{fill:#22304f}

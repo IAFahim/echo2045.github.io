@@ -7,8 +7,14 @@ import "./style.css";
 const MODES = ["STUDENT", "PROGRAMMER", "INTERN", "PROGRAMMER", "HOST", "RESEARCHER", "BUILDER", "MAKER", "GUEST"];
 const ZONES = ["city", "city", "city", "city", "arena", "lab", "build", "arcade", "terminus"];
 
-/* collectible stars [x, y] — the high ones need a hop */
-const PKS = [[330, 556], [760, 556], [1180, 500], [1640, 556], [2100, 556], [2360, 500], [2520, 556], [2960, 556], [3450, 500], [3850, 556], [4270, 500], [4450, 556]];
+/* collectible stars [x, y] — walk or hop into them; four more live in crates */
+const PKS = [[330, 556], [760, 556], [1180, 556], [1640, 556], [2100, 556], [2360, 556], [2960, 556], [3850, 556]];
+
+/* one-way platforms [x1, x2, top] — rickshaw roofs, podium, shelter, bench */
+const PLATS = [[1128, 1224, 548], [3108, 3204, 548], [4408, 4504, 548], [2098, 2162, 606], [4710, 4790, 545], [4732, 4798, 585]];
+
+/* crates [x, y] (26×26) holding stars — bump or shoot to break */
+const CRATES = [[1150, 522], [3130, 522], [2110, 580], [4755, 559]];
 
 /* mid skyline: one long silhouette path (x 0–4800) */
 const SKY = "M0 620V430h90v190zm90-40h60v230H90zm60-90h70v320h-70zm70 30h60v290h-60zm60-70h90v360h-90zm90 20h80v340h-80zm80-60h70v400h-70zm70 40h60v360h-60zm60-90h100v450H860zm100 30h70v420h-70zm70-40h80v460h-80zm80 60h90v400h-90zm90-30h70v430h-70zm70 50h60v380h-60zm60-80h90v460h-90zm90 40h80v420h-80zm80-60h70v480h-70zm70 70h90v410h-90zm90-50h80v460h-80zm80 60h70v400h-70zm70-80h90v480h-90zm90 50h60v430h-60zm60-60h80v490h-80zm80 30h90v460h-90zm90-40h70v500h-70zm70 60h80v440h-80zm80-70h90v510h-90zm90 40h80v470h-80zm80-60h70v530h-70zm70 70h90v460h-90zm90-40h80v500h-80zm80 60h70v440h-70zm70-60h90v500h-90zm90 30h80v470h-80zm80-50h70v520h-70zm70 60h90v460h-90zm90-40h80v500h-80zm80 50h70v450h-70zm70-60h90v510h-90zm90 40h80v470h-80zm80-70h70v540h-70zm70 60h90v480h-90zm90-30h80v510h-80zm80 40h70v470h-70zm70-50h90v520h-90zm90 30h80v490h-80zm80-60h70v550h-70zm70 70h90v480h-90zm90-40h80v520h-80zm80 50h70v470h-70zm70-60h90v530h-90zm90 30h80v500h-80z";
@@ -208,6 +214,15 @@ function World() {
       <rect x="2680" y="622" width="160" height="50" fill="#39d98a" opacity=".07" filter="url(#soft)" />
       <rect x="4090" y="622" width="180" height="50" fill="#ff7ad9" opacity=".08" filter="url(#soft)" />
 
+      {/* crates with stars inside — break them open */}
+      {CRATES.map(([x, y], i) => (
+        <g key={x} className="crate" transform={`translate(${x},${y})`}>
+          <rect width="26" height="26" rx="3" className="crbox" />
+          <path d="M0 0l26 26M26 0L0 26" className="crcross" />
+          <path d="M13 3l2.4 5.1 5.6.5-4.2 3.7 1.2 5.5-5-3-5 3 1.2-5.5-4.2-3.7 5.6-.5z" className="crstar" />
+        </g>
+      ))}
+
       {/* collectibles — grab every star on the way through */}
       {PKS.map(([x, y], i) => (
         <g key={x} className="pk" transform={`translate(${x},${y})`}>
@@ -317,7 +332,9 @@ function Stop({ s, i, n }) {
 function App() {
   const world = useRef(null);
   const fill = useRef(null);
-  const busEl = useRef(null);
+  const heroEl = useRef(null);
+  const trafEl = useRef(null);
+  const fxEl = useRef(null);
   const farEl = useRef(null);
   const fgEl = useRef(null);
   const [next, setNext] = useState(STOPS[0].label);
@@ -326,125 +343,226 @@ function App() {
 
   useEffect(() => {
     const el = world.current;
-    const wrap = busEl.current.parentElement;
+    const hero = heroEl.current, traf = trafEl.current, fx = fxEl.current;
     const pois = [...el.querySelectorAll(".poi")];
     const pks = [...el.querySelectorAll(".pk")];
+    const crateEls = [...el.querySelectorAll(".crate")];
     const dots = [...document.querySelectorAll(".stops a")];
     let lastBest = -1, gotCount = 0;
-    /* drive state — velocity, jump physics, held keys */
-    const held = new Set();
-    let vel = 0, jumpY = 0, vY = 0, grounded = true, raf = 0;
 
-    const collect = (s) => {
-      const max = el.scrollWidth - el.clientWidth;
-      const frac = 0.5 + 0.22 * Math.pow(max ? s / max : 0, 6);
-      const heroX = s + el.clientWidth * frac;
-      const unit = el.clientHeight / 720;
-      const heroTop = el.clientHeight * 0.885 - busEl.current.clientWidth * 0.384 - jumpY;
-      let newGot = 0;
-      pks.forEach((pk, i) => {
-        if (pk.classList.contains("got")) return;
-        const px = PKS[i][0] * el.scrollWidth / 4800;
-        if (px <= heroX + 24 && PKS[i][1] * unit >= heroTop - 14) {
-          pk.classList.add("got"); newGot++;
-        }
-      });
-      if (newGot) { gotCount += newGot; setGot(gotCount); }
+    /* ── free-run state: the hero lives in world units (0–4800) ── */
+    const held = new Set();
+    const H = { x: 170, y: 0, vx: 0, vy: 0, ground: "road", jumps: 0, face: 1, dropT: 0, dropP: null };
+    let camAt = 0, lastUser = 0;
+    const bolts = []; // {x,y,dx,dy,el,life}
+    const bus = { x: 900, v: 1.5, dir: 1 }; // ambient traffic — the night bus loops the route
+
+    const scaleX = () => el.scrollWidth / 4800, scaleY = () => el.clientHeight / 720;
+    const feetY = () => 612 - H.y; // world-y of the hero's feet
+    const addGot = (n) => { gotCount += n; setGot(gotCount); };
+
+    const burst = (ux, uy) => { // wood shards fly out of a broken crate
+      for (let i = 0; i < 7; i++) {
+        const s = document.createElement("i");
+        s.className = "shard";
+        s.style.left = (ux / 4800 * 100) + "%";
+        s.style.top = (uy / 720 * 100) + "%";
+        s.style.setProperty("--dx", (Math.random() * 90 - 45) + "px");
+        s.style.setProperty("--dy", (-20 - Math.random() * 60) + "px");
+        fx.appendChild(s);
+        setTimeout(() => s.remove(), 800);
+      }
+    };
+    const breakCrate = (i) => {
+      const c = crateEls[i];
+      if (!c || c.classList.contains("broken")) return;
+      c.classList.add("broken");
+      const [x, y] = CRATES[i];
+      burst(x + 13, y + 13);
+      addGot(1);
     };
 
+    /* scroll → parallax + signpost proximity (camera dressing, hero-independent) */
     const onScroll = () => {
       const max = el.scrollWidth - el.clientWidth;
       const s = el.scrollLeft;
       fill.current.style.width = (s / max * 100) + "%";
-      busEl.current.style.setProperty("--spin", (s / 9) + "deg");
       if (farEl.current) farEl.current.style.transform = `translateX(${s * 0.35}px)`;
       if (fgEl.current) fgEl.current.style.transform = `translateX(${-s * 1.15}px)`;
       const cx = el.clientWidth / 2;
-      /* the hero holds screen-center for most of the ride, then walks
-         ahead to the gate as the line terminates */
-      const frac = 0.5 + 0.22 * Math.pow(max ? s / max : 0, 6);
-      wrap.style.left = (frac * 100).toFixed(2) + "%";
-      const heroX = s + el.clientWidth * frac;
-      let best = null, bd = 1e9;
-      pois.forEach((p, i) => {
+      pois.forEach((p) => {
         const r = p.getBoundingClientRect();
         const d = Math.abs(r.left + r.width / 2 - cx);
         p.style.setProperty("--near", Math.max(0, 1 - d / (cx * 1.1)).toFixed(2));
-        const dh = Math.abs(STOPS[i].x * el.scrollWidth / 4800 - heroX);
-        if (dh < bd) { bd = dh; best = i; }
       });
-      collect(s);
+    };
+
+    /* hero position → district, persona, dots, pickups, camera */
+    const syncHero = () => {
+      const s = el.scrollLeft, sx = scaleX(), sy = scaleY();
+      let best = 0, bd = 1e9;
+      STOPS.forEach((st, i) => {
+        const d = Math.abs(st.x - H.x);
+        if (d < bd) { bd = d; best = i; }
+      });
       if (best !== lastBest) {
         document.body.dataset.zone = ZONES[best];
         setMode(MODES[best]);
       }
       lastBest = best;
       dots.forEach((d, i) => d.classList.toggle("here", i === best));
-      const nxt = STOPS.find((st) => st.x / 4800 * el.scrollWidth > s + el.clientWidth * 0.62);
-      setNext(s >= max - 4 ? "END OF LINE" : (nxt || STOPS[STOPS.length - 1]).label);
+      const nxt = STOPS.find((st) => st.x > H.x + 110);
+      setNext(nxt ? nxt.label : "END OF LINE");
+      /* stars: touch to collect */
+      let ng = 0;
+      pks.forEach((pk, i) => {
+        if (pk.classList.contains("got")) return;
+        const dx = PKS[i][0] - H.x, dy = PKS[i][1] - (feetY() - 45);
+        if (dx * dx + dy * dy < 30 * 30) { pk.classList.add("got"); ng++; }
+      });
+      if (ng) addGot(ng);
+      /* crates: bump to break */
+      crateEls.forEach((c, i) => {
+        if (c.classList.contains("broken")) return;
+        const [cx, cy] = CRATES[i];
+        if (Math.abs(H.x - (cx + 13)) < 30 && feetY() > cy - 8 && feetY() < cy + 40) breakCrate(i);
+      });
+      /* camera follows when he's moving and the visitor isn't steering */
+      const max = el.scrollWidth - el.clientWidth;
+      const target = Math.max(0, Math.min(max, H.x * sx - el.clientWidth * 0.5));
+      if ((Math.abs(H.vx) > 0.4 || H.ground !== "road" || held.size) && performance.now() - lastUser > 700)
+        el.scrollLeft += (target - el.scrollLeft) * 0.14;
+      /* draw him (transform-only, no layout) */
+      hero.style.transform = `translate(${H.x * sx - hero.offsetWidth / 2}px,${-H.y * sy}px) scaleX(${H.face})`;
+      hero.classList.toggle("air", H.ground === "air");
+      hero.classList.toggle("run", Math.abs(H.vx) > 0.6 && H.ground !== "air");
     };
 
-    /* game loop — keys held → accelerate, gravity pulls the hop down */
-    let driving = false;
+    /* the game loop — always on (traffic never sleeps) */
     const tick = () => {
-      if (!driving) { driving = true; el.style.scrollBehavior = "auto"; }
+      const sx = scaleX();
+      /* move the night bus, bounce it at the city limits */
+      bus.x += bus.v * bus.dir;
+      if (bus.x > 4500) bus.dir = -1; else if (bus.x < 120) bus.dir = 1;
+      traf.style.transform = `translateX(${bus.x * sx}px) scaleX(${bus.dir})`;
+      traf.style.setProperty("--spin", (bus.x * sx / 9) + "deg");
+      const busTop = 551, busX1 = bus.x + 12, busX2 = bus.x + 140;
+
+      /* hero input → velocity */
       const dir = (held.has("d") || held.has("arrowright") ? 1 : 0) - (held.has("a") || held.has("arrowleft") ? 1 : 0);
-      const cap = held.has("shift") ? 15 : 9;
-      if (dir) vel = Math.max(-cap, Math.min(cap, vel + dir * 0.55));
-      else { vel *= 0.9; if (Math.abs(vel) < 0.08) vel = 0; }
-      if (vel) el.scrollLeft += vel;
-      if (!grounded) {
-        jumpY += vY; vY -= 0.55;
-        if (jumpY <= 0) { jumpY = 0; vY = 0; grounded = true; }
+      const cap = held.has("shift") ? 10 : 7;
+      if (dir) { H.vx = Math.max(-cap, Math.min(cap, H.vx + dir * 0.55)); H.face = dir; }
+      else if (!held.size && performance.now() - lastUser < 700) {
+        /* the visitor is steering the camera — he sprints to keep up */
+        const d = (el.scrollLeft + el.clientWidth * 0.5) / sx - H.x;
+        if (Math.abs(d) > 14) { H.vx = Math.max(-9, Math.min(9, H.vx + Math.sign(d) * 0.55)); H.face = Math.sign(d); }
+        else H.vx *= 0.8;
+      } else H.vx *= H.ground === "air" ? 0.94 : 0.8;
+      if (Math.abs(H.vx) < 0.05) H.vx = 0;
+      H.x = Math.max(24, Math.min(4776, H.x + H.vx));
+      if (H.ground === "bus") H.x = Math.max(24, Math.min(4776, H.x + bus.v * bus.dir));
+
+      /* gravity + hold-to-glide */
+      H.vy += 0.42;
+      if ((held.has("w") || held.has(" ") || held.has("arrowup")) && H.vy > 0) H.vy = Math.min(H.vy, 1.15);
+      const prevFeet = feetY();
+      H.y = Math.max(0, H.y + H.vy);
+      const feet = feetY();
+
+      /* one-way platforms + the bus roof */
+      H.ground = "air";
+      const now = performance.now();
+      const plats = PLATS.concat([[busX1, busX2, busTop, "bus"]]);
+      for (const p of plats) {
+        const [x1, x2, top, id] = p;
+        if (H.vy >= 0 && prevFeet <= top + 2 && feet >= top && H.x > x1 - 6 && H.x < x2 + 6 && !(p === H.dropP && now < H.dropT)) {
+          H.y = 612 - top; H.vy = 0; H.ground = id || "plat"; H.jumps = 0; H.onPlat = p; break;
+        }
       }
-      wrap.style.transform = `translateX(-50%) translateY(${-jumpY}px)`;
-      if (vel || !grounded || held.size) collect(el.scrollLeft);
-      if (vel || !grounded || held.size) raf = requestAnimationFrame(tick);
-      else { raf = 0; driving = false; el.style.scrollBehavior = ""; }
+      if (feet >= 612) { H.y = 0; H.vy = 0; H.ground = "road"; H.jumps = 0; }
+      if (H.ground !== "air") H.jumps = Math.min(H.jumps, 1); // first hop used
+
+      /* bolts fly */
+      for (let i = bolts.length - 1; i >= 0; i--) {
+        const b = bolts[i];
+        b.x += b.dx; b.y += b.dy; b.life--;
+        b.el.style.left = (b.x / 4800 * 100) + "%";
+        b.el.style.top = (b.y / 720 * 100) + "%";
+        let dead = b.life <= 0 || b.x < 0 || b.x > 4800 || b.y > 700;
+        crateEls.forEach((c, ci) => {
+          if (dead || c.classList.contains("broken")) return;
+          const [cx, cy] = CRATES[ci];
+          if (b.x > cx - 4 && b.x < cx + 30 && b.y > cy - 4 && b.y < cy + 30) { breakCrate(ci); dead = true; }
+        });
+        pks.forEach((pk, pi) => {
+          if (dead || pk.classList.contains("got")) return;
+          const dx = PKS[pi][0] - b.x, dy = PKS[pi][1] - b.y;
+          if (dx * dx + dy * dy < 22 * 22) { pk.classList.add("got"); addGot(1); dead = true; }
+        });
+        if (dead) { b.el.remove(); bolts.splice(i, 1); }
+      }
+
+      syncHero();
+      requestAnimationFrame(tick);
     };
-    const jump = () => { if (grounded) { grounded = false; vY = 9.5; if (!raf) raf = requestAnimationFrame(tick); } };
+    requestAnimationFrame(tick);
+
+    const jump = () => {
+      if (H.jumps < 2) { H.vy = H.jumps === 0 ? -8.8 : -7.6; H.jumps++; H.ground = "air"; }
+    };
     const KEYS = ["w", "a", "s", "d", "arrowup", "arrowleft", "arrowright", "arrowdown", " ", "shift"];
     const down = (e) => {
       const k = e.key.toLowerCase();
       if (!KEYS.includes(k) || e.target.closest("input,textarea,select,[contenteditable]")) return;
-      if (k === " " && e.target.closest("button,a")) return; // keep native button/link activation
+      if (k === " " && e.target.closest("button,a")) return;
       e.preventDefault();
-      if (k === "w" || k === "arrowup" || k === " ") jump();
-      else if (!held.has(k)) { held.add(k); if (!raf) raf = requestAnimationFrame(tick); }
+      lastUser = 0; // reclaim the camera
+      if (k === "w" || k === "arrowup" || k === " ") { if (!e.repeat) jump(); held.add(k); }
+      else if (k === "s" || k === "arrowdown") { if (H.ground === "plat" || H.ground === "bus") { H.dropT = performance.now() + 380; H.dropP = H.onPlat; H.ground = "air"; H.y -= 2; } }
+      else held.add(k);
     };
     const up = (e) => held.delete(e.key.toLowerCase());
     const blur = () => held.clear();
 
-    /* tap = hop on touch screens */
-    let t0 = 0, tx = 0;
-    const ts = (e) => { t0 = e.timeStamp; tx = e.changedTouches[0].clientX; };
-    const te = (e) => {
-      if (e.target.closest("button,a")) return;
-      if (e.timeStamp - t0 < 240 && Math.abs(e.changedTouches[0].clientX - tx) < 12) jump();
+    /* click/tap = fire a bolt toward the pointer */
+    const fire = (e) => {
+      if (e.target.closest(".hud,.routeline,.poi,button,a")) return;
+      const r = el.getBoundingClientRect();
+      const tx = (el.scrollLeft + e.clientX - r.left) / scaleX();
+      const ty = (e.clientY - r.top) / scaleY();
+      const ox = H.x, oy = feetY() - 52;
+      const d = Math.hypot(tx - ox, ty - oy) || 1;
+      const b = document.createElement("i");
+      b.className = "bolt";
+      b.style.transform = `rotate(${Math.atan2(ty - oy, tx - ox)}rad)`;
+      fx.appendChild(b);
+      bolts.push({ x: ox, y: oy, dx: (tx - ox) / d * 16, dy: (ty - oy) / d * 16, el: b, life: 70 });
+      if (bolts.length > 8) { bolts[0].el.remove(); bolts.shift(); }
     };
 
     const onWheel = (e) => {
-      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { el.scrollLeft += e.deltaY; e.preventDefault(); }
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { lastUser = performance.now(); el.scrollLeft += e.deltaY; e.preventDefault(); }
     };
+    const markUser = (e) => { if (e.buttons) lastUser = performance.now(); };
 
     el.addEventListener("wheel", onWheel, { passive: false });
     el.addEventListener("scroll", onScroll);
-    el.addEventListener("touchstart", ts, { passive: true });
-    el.addEventListener("touchend", te, { passive: true });
+    el.addEventListener("pointermove", markUser);
+    window.addEventListener("pointerdown", fire);
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     window.addEventListener("blur", blur);
-    onScroll();
+    onScroll(); syncHero();
     const h = location.hash.slice(1);
-    if (h) document.getElementById(h)?.scrollIntoView({ inline: "center", behavior: "instant" });
-    else if (matchMedia("(min-width:900px)").matches)
-      el.querySelector("#stop-depot .marker")?.focus();
+    if (h) {
+      const i = STOPS.findIndex((st) => "stop-" + st.id === h);
+      if (i >= 0) { H.x = STOPS[i].x; el.scrollLeft = Math.max(0, H.x * scaleX() - el.clientWidth * 0.5); }
+    }
     return () => {
-      if (raf) cancelAnimationFrame(raf);
       el.removeEventListener("wheel", onWheel);
       el.removeEventListener("scroll", onScroll);
-      el.removeEventListener("touchstart", ts);
-      el.removeEventListener("touchend", te);
+      el.removeEventListener("pointermove", markUser);
+      window.removeEventListener("pointerdown", fire);
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
       window.removeEventListener("blur", blur);
@@ -466,20 +584,22 @@ function App() {
         <div className="track">
           <div className="farclip"><div className="farwrap" ref={farEl}><FarSkyline /></div></div>
           <World />
+          <div className="traffic" ref={trafEl}><Bus /></div>
+          <div className="heropin" ref={heroEl}><Hero /></div>
+          <div className="fx" ref={fxEl} />
           {STOPS.map((s, i) => <Stop key={s.id} s={s} i={i} n={STOPS.length} />)}
         </div>
       </div>
 
       <div className="fgwrap" ref={fgEl}><Foreground /></div>
 
-      <div className="buswrap"><div ref={busEl} className="buspin"><Bus /><Hero /></div></div>
       <div className="storm" aria-hidden="true">{[...Array(26)].map((_, i) => <i key={i} className="drop" style={{ left: (i * 41 % 100) + "%", "--d": (0.55 + (i % 5) * 0.11) + "s", "--delay": -(i * 0.37 % 2) + "s" }} />)}</div>
 
       <header className="hud">
         <span className="plate-lg">NIGHT LINE · echo2045</span>
         <span className="next">NEXT <i className="go">▸</i> {next}</span>
         <span className="mode">MODE ▸ {mode}</span>
-        <span key={got} className="score" aria-label={got + " of " + PKS.length + " stars collected"}>★ {got}/{PKS.length}</span>
+        <span key={got} className="score" aria-label={got + " of " + (PKS.length + CRATES.length) + " stars collected"}>★ {got}/{PKS.length + CRATES.length}</span>
         <span className="flexfill" />
         <nav>
           {STOPS.slice(1, 8).map((s) => <a key={s.id} href={"#stop-" + s.id}>{s.label}</a>)}
@@ -489,7 +609,7 @@ function App() {
       <div className="routeline">
         <div className="fillbar"><i ref={fill} /></div>
         <div className="stops">{STOPS.map((s) => <a key={s.id} href={"#stop-" + s.id} style={{ left: (s.x / 4800 * 100) + "%" }} aria-label={s.label} />)}</div>
-        <p className="drive">scroll · drag · WASD to drive · space to hop · shift to sprint</p>
+        <p className="drive">AD run · W/space jump ×2 · hold to glide · S drop · click to shoot</p>
       </div>
 
       <div className="boot"><b>NIGHT LINE</b><span>loading route · echo2045</span></div>
